@@ -3,6 +3,7 @@ import type { ComposeData } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
 import { useSendEmail, useSaveDraft, usePermanentDelete } from '../../hooks/useEmailMutations';
 import { IconButton } from '../ui/IconButton';
+import { Icon } from '../ui/Icon';
 import { splitList } from '../../utils/splitList';
 
 export const ComposeWindow = () => {
@@ -89,8 +90,8 @@ export const ComposeWindow = () => {
         <span>{compose.replyToId ? 'Reply' : 'New Message'}</span>
         <span>
           <IconButton label="Minimize compose">─</IconButton>
-          <IconButton label="Full screen compose" aria-pressed={full} onClick={() => setFull(v => !v)}>⤢</IconButton>
-          <IconButton label="Close compose" onClick={handleClose}>✕</IconButton>
+          <IconButton label="Full screen compose" aria-pressed={full} onClick={() => setFull(v => !v)}><Icon name="maximize" /></IconButton>
+          <IconButton label="Close compose" onClick={handleClose}><Icon name="close" /></IconButton>
         </span>
       </div>
 
@@ -148,12 +149,12 @@ export const ComposeWindow = () => {
           onClick={handleSend}
         >
           <span className="compose__send-label">Send</span>
-          <span className="compose__send-caret" aria-hidden="true">▾</span>
+          <span className="compose__send-caret" aria-hidden="true"><Icon name="caret-down" /></span>
         </button>
-        <IconButton label="Attach files">📎</IconButton>
+        <IconButton label="Attach files"><Icon name="attachment" /></IconButton>
         <IconButton label="Formatting options">A</IconButton>
-        <IconButton label="More options">⋯</IconButton>
-        <IconButton label="Discard draft" onClick={handleDiscard}>🗑</IconButton>
+        <IconButton label="More options"><Icon name="more" /></IconButton>
+        <IconButton label="Discard draft" onClick={handleDiscard}><Icon name="trash" /></IconButton>
       </div>
     </section>
   );

@@ -12,7 +12,8 @@ import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { IconButton } from '../ui/IconButton';
 import { Avatar } from '../ui/Avatar';
 import { LabelChip } from '../ui/LabelChip';
-import { formatDate } from '../../utils/formatDate';
+import { Icon } from '../ui/Icon';
+import { formatDate, formatDateFull } from '../../utils/formatDate';
 import { draftComposeData } from '../../utils/draftCompose';
 import { SNOOZE_MENU } from '../../utils/snooze';
 
@@ -69,26 +70,26 @@ export const EmailView = ({ email }: { email: Email }) => {
   return (
     <div className="email-view">
       <div className="email-view__bar">
-        <IconButton label="Back to list" onClick={close}>←</IconButton>
-        <IconButton label="Archive" disabled={pending} onClick={() => { archive.mutate([email.id]); close(); }}>📥</IconButton>
-        <IconButton label="Report spam" disabled={pending} onClick={() => { moveToSpam.mutate([email.id]); close(); }}>⚠️</IconButton>
+        <IconButton label="Back to list" onClick={close}><Icon name="back" /></IconButton>
+        <IconButton label="Archive" disabled={pending} onClick={() => { archive.mutate([email.id]); close(); }}><Icon name="archive" /></IconButton>
+        <IconButton label="Report spam" disabled={pending} onClick={() => { moveToSpam.mutate([email.id]); close(); }}><Icon name="spam" /></IconButton>
         <IconButton
           label={email.container !== null && PERMANENT_DELETE_CONTAINERS.has(email.container) ? 'Delete forever' : 'Delete'}
           danger
           disabled={pending}
           onClick={() => { routeDelete.mutate([email.id]); close(); }}
         >
-          🗑
+          <Icon name="trash" />
         </IconButton>
         <IconButton
           label="Mark as unread"
           disabled={markRead.isPending}
           onClick={() => { markRead.mutate({ ids: [email.id], unread: true }); close(); }}
         >
-          📧
+          <Icon name="mail" />
         </IconButton>
         <span className="menu-wrap">
-          <IconButton label="Snooze" aria-expanded={snoozeMenu} disabled={pending} onClick={() => setSnoozeMenu(v => !v)}>⏰</IconButton>
+          <IconButton label="Snooze" aria-expanded={snoozeMenu} disabled={pending} onClick={() => setSnoozeMenu(v => !v)}><Icon name="clock" /></IconButton>
           {snoozeMenu && (
             <span className="menu" style={{ top: 44, left: 0 }}>
               {SNOOZE_MENU.map(p => (
@@ -103,13 +104,13 @@ export const EmailView = ({ email }: { email: Email }) => {
                     close();
                   }}
                 >
-                  ⏰ {p.label}
+                  {p.label}
                 </button>
               ))}
             </span>
           )}
         </span>
-        <IconButton label="More actions">⋯</IconButton>
+        <IconButton label="More actions"><Icon name="more" /></IconButton>
       </div>
 
       <div className="email-view__scroll">
@@ -133,7 +134,7 @@ export const EmailView = ({ email }: { email: Email }) => {
                 {email.cc.length > 0 && ` · cc: ${email.cc.join(', ')}`}
               </div>
             </div>
-            <div className="email-view__date">{formatDate(email.timestamp)}</div>
+            <div className="email-view__date">{formatDateFull(email.timestamp)}</div>
           </div>
 
           <pre className="email-view__body">{email.body}</pre>
@@ -142,7 +143,7 @@ export const EmailView = ({ email }: { email: Email }) => {
             <div className="email-view__attachments">
               {email.attachments.map(a => (
                 <div key={a.name} className="attachment">
-                  <span aria-hidden="true">📎</span>
+                  <Icon name="attachment" />
                   <span className="attachment__name">{a.name}</span>
                   <span className="attachment__size">({a.size})</span>
                 </div>
@@ -159,13 +160,13 @@ export const EmailView = ({ email }: { email: Email }) => {
                 className="btn btn--primary"
                 onClick={() => { close(); ui.setComposeData(draftComposeData(email)); }}
               >
-                ✎ Edit draft
+                <Icon name="edit" /> Edit draft
               </button>
             ) : (
               <>
-                <button type="button" className="btn" onClick={replyTo}>↩ Reply</button>
-                <button type="button" className="btn" onClick={replyAll}>↩↩ Reply all</button>
-                <button type="button" className="btn" onClick={forward}>→ Forward</button>
+                <button type="button" className="btn" onClick={replyTo}>Reply</button>
+                <button type="button" className="btn" onClick={replyAll}>Reply all</button>
+                <button type="button" className="btn" onClick={forward}>Forward</button>
               </>
             )}
           </div>

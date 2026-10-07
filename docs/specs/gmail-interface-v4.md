@@ -162,7 +162,7 @@ src/
     ├── layout/   AppShell.tsx  TopBar.tsx  Sidebar.tsx
     ├── email/    EmailList.tsx EmailRow.tsx EmailToolbar.tsx EmailView.tsx
     ├── compose/  ComposeWindow.tsx
-    └── ui/       Avatar.tsx Badge.tsx IconButton.tsx LabelChip.tsx
+    └── ui/       Avatar.tsx Badge.tsx Icon.tsx IconButton.tsx LabelChip.tsx
                   Spinner.tsx EmptyState.tsx Toast.tsx
 ```
 
@@ -768,7 +768,7 @@ Implementation notes (amendments to the snippet above):
 - Recipient validation reuses the shared `splitList` from `utils/splitList.ts`.
 
 ### `ui/` atoms
-`Avatar` (initials, deterministic pastel), `Badge`, `IconButton` (`aria-label` required), `LabelChip` (click → `changeLabel`, `stopPropagation`), `Spinner`, `Toast` (fixed bottom-center, auto-dismiss), `EmptyState`.
+`Avatar` (initials, deterministic pastel), `Badge`, `Icon` (monochrome 24px line glyphs, `currentColor`), `IconButton` (`aria-label` required), `LabelChip` (click → `changeLabel`, `stopPropagation`), `Spinner`, `Toast` (fixed bottom-left snackbar, 24px inset, `#202121`, radius 4, auto-dismiss), `EmptyState`.
 
 ### `EmptyState.tsx` — per-View copy, never hardcoded globally
 | View | Message |

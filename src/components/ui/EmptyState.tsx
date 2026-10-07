@@ -1,15 +1,16 @@
 import type { SidebarView } from '../../types/email';
+import { Icon, type IconName } from './Icon';
 
-const ICONS: Partial<Record<SidebarView, string>> = {
-  starred: '⭐',
-  important: '❗',
-  snoozed: '⏰',
-  spam: '⚠️',
-  trash: '🗑️',
-  drafts: '📝',
-  sent: '📤',
-  inbox: '📥',
-  all: '📁',
+const ICONS: Partial<Record<SidebarView, IconName>> = {
+  starred: 'star',
+  important: 'important',
+  snoozed: 'clock',
+  spam: 'spam',
+  trash: 'trash',
+  drafts: 'file',
+  sent: 'send',
+  inbox: 'inbox',
+  all: 'folder',
 };
 
 export const EmptyState = ({
@@ -41,7 +42,7 @@ export const EmptyState = ({
   return (
     <div className="empty">
       <div className="empty__icon" aria-hidden="true">
-        {search ? '🔍' : ICONS[view] ?? '📭'}
+        <Icon name={search ? 'search' : ICONS[view] ?? 'mail'} />
       </div>
       <div>{message}</div>
     </div>

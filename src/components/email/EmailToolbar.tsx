@@ -6,6 +6,7 @@ import { useArchive, useMoveToSpam, useRestore, useMarkRead } from '../../hooks/
 import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { PERMANENT_DELETE_CONTAINERS, type Email } from '../../types/email';
 import { IconButton } from '../ui/IconButton';
+import { Icon } from '../ui/Icon';
 
 export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; emails: Email[] }) => {
   const ui = useUI();
@@ -50,7 +51,7 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
           disabled={visibleIds.length === 0}
           onClick={() => ui.selectAll(visibleIds)}
         >
-          ☐
+          <Icon name="checkbox" />
         </IconButton>
         <span className="menu-wrap">
           <IconButton
@@ -59,7 +60,7 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
             disabled={visibleIds.length === 0}
             onClick={() => setSelMenu(v => !v)}
           >
-            ▾
+            <Icon name="caret-down" />
           </IconButton>
           {selMenu && (
             <span className="menu" style={{ top: 44, left: 0 }}>
@@ -68,7 +69,7 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
                 className="menu__item"
                 onClick={() => { ui.selectAll(visibleIds); setSelMenu(false); }}
               >
-                ☐ Select all
+                Select all
               </button>
               <button
                 type="button"
@@ -76,14 +77,14 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
                 disabled={markRead.isPending}
                 onClick={() => { markRead.mutate({ ids: visibleIds, unread: false }); setSelMenu(false); }}
               >
-                ✔ Mark all as read
+                Mark all as read
               </button>
             </span>
           )}
         </span>
-        <IconButton label="Refresh" onClick={() => qc.invalidateQueries({ queryKey: EMAIL_QK })}>↺</IconButton>
+        <IconButton label="Refresh" onClick={() => qc.invalidateQueries({ queryKey: EMAIL_QK })}><Icon name="refresh" /></IconButton>
         <span className="menu-wrap">
-          <IconButton label="More actions" onClick={() => setMoreMenu(v => !v)} aria-expanded={moreMenu}>⋯</IconButton>
+          <IconButton label="More actions" onClick={() => setMoreMenu(v => !v)} aria-expanded={moreMenu}><Icon name="more" /></IconButton>
           {moreMenu && (
             <span className="menu" style={{ top: 44, left: 12 }}>
               <button
@@ -91,7 +92,7 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
                 className="menu__item"
                 onClick={() => { ui.selectAll(visibleIds); setMoreMenu(false); }}
               >
-                ☐ Select all
+                Select all
               </button>
               <button
                 type="button"
@@ -99,7 +100,7 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
                 disabled={markRead.isPending}
                 onClick={() => { markRead.mutate({ ids: visibleIds, unread: false }); setMoreMenu(false); }}
               >
-                ✔ Mark all as read
+                Mark all as read
               </button>
             </span>
           )}
@@ -120,16 +121,16 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
         label={allSelected ? 'Clear selection' : 'Select all'}
         onClick={() => (allSelected ? ui.clearSelection() : ui.selectAll(visibleIds))}
       >
-        ☐
+        <Icon name={allSelected ? 'checkbox-checked' : 'checkbox'} />
       </IconButton>
       <span className="toolbar__spacer" />
 
-      <IconButton label="Archive" disabled={pending} onClick={() => { archive.mutate(targetIds); ui.clearSelection(); }}>📥</IconButton>
-      <IconButton label="Report spam" disabled={pending} onClick={() => { moveToSpam.mutate(targetIds); ui.clearSelection(); }}>⚠️</IconButton>
-      <IconButton label={allPermanent ? 'Delete forever' : 'Delete'} danger disabled={pending} onClick={handleDelete}>🗑</IconButton>
+      <IconButton label="Archive" disabled={pending} onClick={() => { archive.mutate(targetIds); ui.clearSelection(); }}><Icon name="archive" /></IconButton>
+      <IconButton label="Report spam" disabled={pending} onClick={() => { moveToSpam.mutate(targetIds); ui.clearSelection(); }}><Icon name="spam" /></IconButton>
+      <IconButton label={allPermanent ? 'Delete forever' : 'Delete'} danger disabled={pending} onClick={handleDelete}><Icon name="trash" /></IconButton>
 
       <span className="menu-wrap">
-        <IconButton label="Mark read" disabled={pending} aria-expanded={markMenu} onClick={() => setMarkMenu(v => !v)}>✔</IconButton>
+        <IconButton label="Mark read" disabled={pending} aria-expanded={markMenu} onClick={() => setMarkMenu(v => !v)}><Icon name="mail" /></IconButton>
         {markMenu && (
           <span className="menu" style={{ top: 44, right: 0 }}>
             <button type="button" className="menu__item" disabled={markRead.isPending}
@@ -145,20 +146,20 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
       </span>
 
       <span className="menu-wrap">
-        <IconButton label="Move to" disabled={pending} aria-expanded={moveMenu} onClick={() => setMoveMenu(v => !v)}>📂</IconButton>
+        <IconButton label="Move to" disabled={pending} aria-expanded={moveMenu} onClick={() => setMoveMenu(v => !v)}><Icon name="folder" /></IconButton>
         {moveMenu && (
           <span className="menu" style={{ top: 44, right: 0 }}>
             <button type="button" className="menu__item" disabled={restore.isPending}
               onClick={() => { restore.mutate(targetIds); ui.clearSelection(); setMoveMenu(false); }}>
-              📥 Inbox
+              Inbox
             </button>
             <button type="button" className="menu__item" disabled={moveToSpam.isPending}
               onClick={() => { moveToSpam.mutate(targetIds); ui.clearSelection(); setMoveMenu(false); }}>
-              ⚠️ Spam
+              Spam
             </button>
             <button type="button" className="menu__item menu__item--danger" disabled={routeDelete.isPending}
               onClick={() => { routeDelete.mutate(targetIds); ui.clearSelection(); setMoveMenu(false); }}>
-              🗑 Trash
+              Trash
             </button>
           </span>
         )}

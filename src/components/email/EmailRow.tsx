@@ -8,6 +8,7 @@ import {
 } from '../../hooks/useEmailMutations';
 import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { LabelChip } from '../ui/LabelChip';
+import { Icon } from '../ui/Icon';
 import { formatDate } from '../../utils/formatDate';
 import { draftComposeData } from '../../utils/draftCompose';
 import { SNOOZE_MENU, snoozedIntoFuture } from '../../utils/snooze';
@@ -83,7 +84,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
           disabled={toggleStar.isPending}
           onClick={() => toggleStar.mutate(email.id)}
         >
-          {starOn ? '★' : '☆'}
+          {starOn ? <Icon name="star" filled /> : <Icon name="star" />}
         </button>
       </span>
 
@@ -96,7 +97,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
           disabled={toggleImportant.isPending}
           onClick={() => toggleImportant.mutate(email.id)}
         >
-          ❗
+          !
         </button>
       </span>
 
@@ -110,7 +111,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
             <LabelChip label={l} onClick={() => ui.changeLabel(l)} />
           </span>
         ))}
-        {snoozed && <span className="snooze-badge">⏰ snoozed</span>}
+        {snoozed && <span className="snooze-badge"><Icon name="clock" />snoozed</span>}
       </span>
 
       <span className="row__meta" onClick={stop}>
@@ -124,7 +125,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
             disabled={pending}
             onClick={() => archive.mutate([email.id])}
           >
-            📥
+            <Icon name="archive" />
           </button>
           <span className="menu-wrap">
             <button
@@ -136,7 +137,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
               aria-expanded={snoozeMenu}
               onClick={openSnoozeMenu}
             >
-              ⏰
+              <Icon name="clock" />
             </button>
             {snoozeMenu && menuPos && (
               <span
@@ -155,7 +156,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
                     }}
                     disabled={snooze.isPending}
                   >
-                    ⏰ {p.label}
+                    {p.label}
                   </button>
                 ))}
                 {snoozed && (
@@ -179,7 +180,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
             disabled={routeDelete.isPending}
             onClick={() => routeDelete.mutate([email.id])}
           >
-            🗑
+            <Icon name="trash" />
           </button>
         </span>
       </span>
