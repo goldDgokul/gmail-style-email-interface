@@ -59,7 +59,7 @@ export const Sidebar = () => {
 
         {labels.length > 0 && (
           <>
-            <div className="sidebar__divider"><span>── Labels ──</span></div>
+            <div className="sidebar__divider"><span>Labels</span></div>
             {labels.map(name => {
               const active = ui.view === 'label' && ui.activeLabel === name;
               const count = selectUnreadCount(emails, 'label', name);

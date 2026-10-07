@@ -650,7 +650,7 @@ export const useKeyboardShortcuts = (
 
 ## 9. Design System (`src/index.css`)
 
-Unchanged from v3: full token system (colors, typography, layout, elevation, spacing, radii) with `--dur: 140ms` and `@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms } }`, `body { height: 100dvh; overflow: hidden }`. Fonts: Google Sans + Roboto via Google Fonts `@import`.
+Unchanged from v3: full token system (colors, typography, layout, elevation, spacing, radii) with `--dur: 140ms` and `@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms } }`, `body { height: 100dvh; overflow: hidden }`. Fonts: `--font-sans: "Google Sans", "Roboto", system-ui, …` — the Google Fonts `@import` is deliberately omitted (offline-safe build; Google Sans/Roboto resolve when installed locally, otherwise `system-ui`). Token deviation from v3: `--c-bg: #f8fafd` — measured from Gmail reference screenshots (v3's `#f6f8fc` was an estimate; Gmail's top bar, sidebar, and right gutter all render `#f8fafd`).
 
 ---
 
@@ -672,7 +672,7 @@ Search is debounced 200ms with cleanup, and a non-empty search **sets `search` i
 ### `Sidebar.tsx`
 Flex column: compose button (`flex-shrink: 0`, top of column — *not* sticky) then a `flex: 1; overflow-y: auto` nav. Active item: `background: var(--c-selected); color: var(--c-primary)`.
 
-Items: Inbox, Starred, Important, Snoozed, Sent, Drafts, Spam, Trash, All Mail — then `── Labels ──` with `changeLabel(name)` chips.
+Items: Inbox, Starred, Important, Snoozed, Sent, Drafts, Spam, Trash, All Mail — then a plain `Labels` section header (no `+`/menu affordance — guardrail #13 makes a create-label control dead UI) with `changeLabel(name)` chips.
 Unread pill: **rendered only for Inbox and user-label items** (guardrail #14), value from `selectUnreadCount(emails, view, activeLabel)`. Inbox uses `'inbox'` + `null`; a label uses `'label'` + its name.
 Compose button → `setComposeData({ ...EMPTY_COMPOSE })`.
 
@@ -684,8 +684,8 @@ Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-
 `@media (max-width: 768px)`: hide star/flag **and `.row__meta` (date/actions)** — grid becomes `40px 120px 1fr`, i.e. exactly `[checkbox · sender · subject]`; **subject always present**.
 
 - Row click / Enter / Space → **drafts**: `setComposeData(draftComposeData(email))` (§0.6 re-edit); **everything else**: `setOpenEmailId(id)` **only** — no mark-read here (guardrail #19).
-- Every inner control (`checkbox`, star, flag, hover archive/trash/snooze icons, label chips, attachment badges) → `e.stopPropagation()`; each is `disabled={mutation.isPending}` (snooze items gate on `snooze.isPending`, wake on `unsnooze.isPending`).
-- Hover icons use the container-keyed handlers: archive → `archive([id])`; trash → delete route (0.3); snooze → preset menu (+ "↩ Wake up now" when snoozed).
+- Every inner control (`checkbox`, star, flag, hover archive/delete/mark-unread/snooze icons, label chips, attachment badges) → `e.stopPropagation()`; each is `disabled={mutation.isPending}` (snooze items gate on `snooze.isPending`, wake on `unsnooze.isPending`).
+- Hover icons render left-to-right in Gmail's measured order — **archive, delete, mark-as-unread, snooze** — and use the container-keyed handlers: archive → `archive([id])` (glyph: archive box with `+`); delete → delete route (0.3); mark-as-unread → `markRead({ ids: [id], unread: true })` (an explicit control, so guardrail #19 is untouched — it governs the mark-*read* path only); snooze → preset menu (+ "↩ Wake up now" when snoozed).
 - `aria-label` on every icon control; `aria-pressed` on star/flag.
 - Carries a `// No threading — each Email is independent (§0.7)` comment (`EmailList.tsx` carries it too).
 

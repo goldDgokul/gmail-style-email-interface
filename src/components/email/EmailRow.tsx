@@ -4,7 +4,7 @@ import type { Email } from '../../types/email';
 import { SNOOZE_PRESETS } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
 import {
-  useToggleStar, useToggleImportant, useArchive, useSnooze, useUnsnooze,
+  useToggleStar, useToggleImportant, useArchive, useSnooze, useUnsnooze, useMarkRead,
 } from '../../hooks/useEmailMutations';
 import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { LabelChip } from '../ui/LabelChip';
@@ -34,9 +34,10 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
   const snooze = useSnooze();
   const unsnooze = useUnsnooze();
   const routeDelete = useDeleteRoute();
+  const markRead = useMarkRead();
 
   const pending = toggleStar.isPending || toggleImportant.isPending || archive.isPending
-    || snooze.isPending || unsnooze.isPending || routeDelete.isPending;
+    || snooze.isPending || unsnooze.isPending || routeDelete.isPending || markRead.isPending;
   const starOn = email.flags.includes('STARRED');
   const importantOn = email.flags.includes('IMPORTANT');
   const snoozed = snoozedIntoFuture(email);
@@ -127,6 +128,26 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
           >
             <Icon name="archive" />
           </button>
+          <button
+            type="button"
+            className="icon-btn icon-btn--sm icon-btn--danger"
+            aria-label="Delete"
+            title="Delete"
+            disabled={routeDelete.isPending}
+            onClick={() => routeDelete.mutate([email.id])}
+          >
+            <Icon name="trash" />
+          </button>
+          <button
+            type="button"
+            className="icon-btn icon-btn--sm"
+            aria-label="Mark as unread"
+            title="Mark as unread"
+            disabled={pending}
+            onClick={() => markRead.mutate({ ids: [email.id], unread: true })}
+          >
+            <Icon name="unread" />
+          </button>
           <span className="menu-wrap">
             <button
               type="button"
@@ -172,16 +193,6 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
               </span>
             )}
           </span>
-          <button
-            type="button"
-            className="icon-btn icon-btn--sm icon-btn--danger"
-            aria-label="Delete"
-            title="Delete"
-            disabled={routeDelete.isPending}
-            onClick={() => routeDelete.mutate([email.id])}
-          >
-            <Icon name="trash" />
-          </button>
         </span>
       </span>
     </div>

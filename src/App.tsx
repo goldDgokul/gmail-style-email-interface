@@ -26,7 +26,7 @@ export default function App() {
   const markRead = useMarkRead();
   const routeDelete = useDeleteRoute();
 
-  // Guardrail #21 — the open email leaving the View drops you back to the list
+  // The open email leaving the visible set drops you back to the list
   useEffect(() => {
     if (ui.openEmailId && !visibleEmails.some(e => e.id === ui.openEmailId)) {
       ui.setOpenEmailId(null);
