@@ -1,0 +1,270 @@
+================================================================================
+                    END-OF-DAY REPORT - Gokul
+        Gmail-Style Email Interface  --  October 7, 2026
+   Repo: github.com/goldDgokul/gmail-style-email-interface  (branch: main)
+   Live: https://gmail-style-email-interface.golddgokul.workers.dev/
+================================================================================
+
+1. SUMMARY AT A GLANCE
+--------------------------------------------------------------------------------
+Took the app from review-closed to near-pixel Gmail parity and put it on the
+public internet. The afternoon ran: a prioritized parity plan executed in
+three batches (structure/density, visual language, polish), two rounds of
+user-reported layout fixes (card not closing on the right; hover icons
+sitting on top of the mail text), and a Cloudflare Workers deployment with
+auto-deploy wired to main. Every visual change was measurement-driven --
+Gmail reference screenshots probed pixel-by-pixel, clone state confirmed
+with computed-style probes and Playwright smoke tests, zero console errors
+in every run. 5 new commits pushed; 10 total on the repo.
+
+  STATUS .................................. Feature-complete, parity-closed, LIVE
+  COMMITS .................................. 10 total (5 this round), all pushed to origin/main
+  BUILD (tsc -b + vite) ................... PASS after every commit
+  LINT (oxlint) ........................... PASS, zero warnings after every commit
+  VERIFICATION ............................. computed-style probes + PIL pixel probes
+                                              vs Gmail refs + Playwright smoke -- all green
+  CONSOLE ERRORS .......................... none in any run
+  DEPLOY ................................. LIVE on Cloudflare Workers (HTTP 200),
+                                              auto-deploy ~30s on push to main
+  WORKING TREE ............................ clean, in sync with origin
+
+
+2. LIVE DEPLOYMENT (Cloudflare Workers)
+--------------------------------------------------------------------------------
+  URL ........ https://gmail-style-email-interface.golddgokul.workers.dev/
+  BUILD TIME . 5 seconds
+  DEPLOY TIME . 49 seconds
+  LIVE STATUS . HTTP 200 -- bundled React 19 app, styles, and Roboto fonts
+               served cleanly from Cloudflare's global edge network
+  AUTO-DEPLOY . ON: any future commit pushed to main on GitHub rebuilds
+               and redeploys to the same URL within ~30 seconds
+
+
+3. COMMIT TIMELINE (Oct 7, 2026 -- afternoon parity round)
+--------------------------------------------------------------------------------
+  Morning (spec grilling, 18-step build, two-axis code review, review
+  fixes) is documented in MIDDAY_REPORT.txt -- commits d821273..6db877b.
+
+  54ef366 17:35  Batch A Gmail parity: 40px borderless rows, compose
+                     button/window, flush nav pill, toolbar select-all
+                     + count                          (5 files, +132/-48)
+  d52d151 17:57  Batch B Gmail parity: monochrome SVG icon set, Gmail
+                     logo, search pill, view subject/date/actions,
+                     snackbar toast                   (11 files, +265/-99)
+  4771f2c 18:10  Batch C polish: measured --c-bg #f8fafd, plain Labels
+                     header, row-hover mark-as-unread + Gmail icon order,
+                     archive plus glyph, spec amendments
+                                                       (7 files, +254/-20)
+  55733c1 18:41  Fix list layout parity: 56px right rail gutter so the
+                     card closes, opaque hover action box replacing date
+                     (icons no longer overlap text), Gmail left inset
+                     + 12px scrollbar styling, spec amendments
+                                                       (2 files, +37/-10)
+  2074049 18:47  Round the mail card's top-right corner to match the
+                     left (Gmail right corner re-measured as rounded);
+                     spec corrected                   (2 files, +2/-1)
+
+  PARITY ROUND TOTAL .... 13 files changed, +678 / -166
+
+
+4. PHASE 1 -- THE PARITY PLAN (step 3 deliverable)
+--------------------------------------------------------------------------------
+Delivered a prioritized plan against the v4 spec + 10 Gmail reference
+screenshots, executed in three approved batches with a spec-amendment
+table attached:
+
+  P0 structure/density .... rows, compose button/window, nav pill,
+                            toolbar idle state            -> Batch A
+  P1 visual language ...... monochrome icons, Gmail logo, search pill,
+                            email view, toast             -> Batch B
+  P2 polish ................ background token, Labels header, hover set,
+                            guardrail comment cleanup     -> Batch C
+
+Ground rule: every value MEASURED from real Gmail screenshots (PIL pixel
+probes), never guessed. Conflicts with the spec were resolved by amending
+the spec, not by deviating silently.
+
+
+5. BATCH A -- STRUCTURE AND DENSITY (54ef366)
+--------------------------------------------------------------------------------
+ROWS
+  [x] --row-h 40px, borderless rows (Gmail has no row dividers)
+  [x] Row hover tint #f2f6fc, row font 15px
+  [x] Checkbox 20px, star glyph 18px (Gmail-measured)
+
+COMPOSE
+  [x] Compose button: 56px tall, radius 16, #c2e7ff bg, #001d35 text,
+      content-width (no rest shadow); Gmail hover elevation on demand
+  [x] Compose window: --compose-w 600px (spec L919 amended), radius 8,
+      elevation-24 shadow, light header #f1f3f4 with dark text,
+      segmented Send (radius 18 0 0 18 + divider caret)
+  [x] Fullscreen toggle implemented (spec L724 compliance fix)
+
+SIDEBAR
+  [x] Flush-left active pill (margin-left -8px): active #001d35, 700
+  [x] Plain-text counts via toLocaleString; bold "nav-item--strong"
+      when count > 0; Badge component removed from Sidebar
+
+TOOLBAR (spec L693 amended)
+  [x] Idle state: [Select all] [dropdown menu] [Refresh] [More] +
+      right-aligned "1-15 of 15" count, no bottom border
+  [x] Menu offers Select all / Mark all as read
+
+CLEANUP
+  [x] Dead token --c-primary-soft removed
+
+
+6. BATCH B -- VISUAL LANGUAGE (d52d151)
+--------------------------------------------------------------------------------
+NEW: src/components/ui/Icon.tsx
+  [x] 27 stroke-based monochrome glyphs (GLYPHS map, IconName type,
+      filled prop), .icon CSS with context sizes (24/20/18/16/14/48)
+  [x] Emoji eliminated EVERYWHERE: sidebar nav, topbar, toolbar, row
+      star/flag/hover/snooze, view header, compose footer, empty state,
+      attachment and reply buttons -- Gmail's line-icon language
+
+TOPBAR
+  [x] Real Gmail logo: inline 5-color SVG (4285f4/34a853/fbbc04/
+      ea4335/c5221f) + wordmark, probe-confirmed all 5 colors present
+  [x] Search pill: h40, white, 1px #dadce0, radius 999, leading
+      magnifier, 16px input, focus elevation shadow
+  [x] Avatar large (40px), action icons in Gmail text color
+
+EMAIL VIEW
+  [x] Subject 22px, sender 40px avatar, date now renders Gmail format
+      "Wed, Oct 7, 3:12 PM (today)" via formatDateFull
+  [x] Date formatting pinned to 'en-US' (headless locale had been
+      rendering "Wed 7 Oct, 15:12" instead of Gmail's format)
+  [x] Reply / Reply all / Forward as outlined pill buttons (h40)
+
+TOAST (spec L771 amended)
+  [x] Bottom-left snackbar: 24px inset, #202121, radius 4, min-h 48,
+      action #8AB4F8 -- probe-verified exact
+
+
+7. BATCH C -- POLISH (4771f2c)
+--------------------------------------------------------------------------------
+  [x] --c-bg #f6f8fc -> #f8fafd (measured from Gmail's top bar, sidebar,
+      and right gutter; v3's value was an estimate)
+  [x] Sidebar "---- Labels ----" -> plain "Labels" header (a create-label
+      control would be dead UI under guardrail #13)
+  [x] Row hover set matched to Gmail's MEASURED order (4 icons, probed
+      from the reference hover screenshot): Archive, Delete,
+      Mark-as-unread, Snooze -- new "unread" open-envelope glyph and
+      archive box with "+"; markRead({unread:true}) wired and verified
+      (read row gains row--unread after click)
+  [x] Removed stray "Guardrail #21" comment in App.tsx (spec has exactly
+      20 guardrails)
+  [x] MIDDAY_REPORT.txt committed to the repo
+
+
+8. FIX ROUND 1 -- USER BUG REPORT (55733c1)
+--------------------------------------------------------------------------------
+Reported: (a) the mail card did not end/close on the right -- no space
+left, while Gmail has space and a scrollbar; (b) the 4 hover icons
+rendered ON TOP of the mail text, unclear.
+
+MEASURED FIRST (Gmail refs)
+  - right gutter: white card ends 56-68px short of the window edge
+  - scrollbar: 12px strip, thumb #cccccc, track shows card white
+  - row left inset: checkbox sits 19px from the card edge (ours: 11)
+  - hover: date REPLACED by an opaque action box; text never shows through
+
+FIXES
+  [x] 56px right rail gutter: .shell grid gains an empty 3rd column
+      (--rail-w, painted by body --c-bg); the white card now closes at
+      1384px with #f8fafd breathing room to the edge; --rail-w 0 at <=768
+  [x] Opaque hover action box: position absolute, right 12px, spans the
+      row height, background = row hover color (#f2f6fc), or #d3e3fd when
+      the row is checked -- replaces the date and covers the preview
+      tail. Pixel proof: zero non-background pixels under the box where
+      preview text used to bleed through
+  [x] Row padding-left 8px -> checkbox now 19px from the card edge,
+      exactly Gmail
+  [x] Gmail-style scrollbar: 12px, transparent track, thumb #cccccc
+      (hover #9aa0a6) as tokens + scrollbar-color for Firefox; rules
+      confirmed in CSSOM (headless Chrome does not paint scrollbars --
+      real browsers will, whenever content overflows)
+  [x] Verified: no horizontal overflow at 1440/1475/1920/1280 + under
+      compose-open and snooze-menu stress; mobile rail 0px; scroll works
+      when content exceeds the viewport; zero console errors
+
+
+9. FIX ROUND 2 -- RIGHT CORNER RADIUS (2074049)
+--------------------------------------------------------------------------------
+Reported: the card's top-right corner did not have the same rounded edge
+as the left.
+
+  [x] Corner re-mapped pixel-by-pixel on BOTH the Gmail reference and the
+      clone: Gmail's top-right IS rounded (r~12, scrollbar clipped inside
+      the rounded card) -- the earlier "square" conclusion came from
+      probing a single x-pixel inside the card and was wrong; spec
+      corrected
+  [x] border-top-right-radius restored on .shell -- both top corners now
+      render matching 16px arcs (verified with ASCII corner maps showing
+      symmetric curves on left and right)
+
+
+10. SPEC AMENDMENTS THIS ROUND (v4 = single source of truth)
+--------------------------------------------------------------------------------
+  L165-166 .... ui/Icon.tsx added to the component tree
+  L653 ........ offline-safe fonts (no Google Fonts @import), --c-bg
+                #f8fafd measured, new tokens --rail-w / scroll-thumb
+  L661-666 .... shell grid gains the 56px rail gutter column, scrollbar
+                styling, both top corners rounded (corrected)
+  L675 ........ plain "Labels" section header (no create affordance)
+  L683 ........ row padding 8px 12px, 92px meta column, 19px inset
+  L687-688 .... hover set = archive/delete/mark-as-unread/snooze in an
+                opaque action box (replaces, never overlays)
+  L693 ........ idle toolbar state (Batch A)
+  L771 ........ toast = bottom-left snackbar spec (Batch B)
+  L919 ........ compose window 600px (Batch A)
+
+
+11. VERIFICATION LEDGER
+--------------------------------------------------------------------------------
+  npm run build (tsc -b + vite) ......... PASS after all 5 commits
+  npm run lint (oxlint) ................. PASS, zero warnings, all 5
+  Computed-style probes ................. exact on every target:
+      rows 40/borderless/hover #f2f6fc/15px; compose button 56/r16/
+      #c2e7ff/no rest shadow; window 600/r8/elev-24; nav pill flush
+      #001d35/700; search h40/r999/white; subject 22px; toast #202121
+      bottom-left; --c-bg #f8fafd; hover order + glyphs; box opaque;
+      left inset 19px; card closes at 1384px; corners symmetric
+  PIL pixel probes vs gmail_01..09 ...... background, gutter, hover tint,
+      logo colors, row/toolbar/corner geometry all match
+  Playwright smoke ...................... snooze menu (3 presets),
+      archive 15->14, delete 14->13, mark-unread read->unread, search,
+      open view, short-viewport scroll -- zero console errors
+  Screenshots on record ................. cloneA_*, cloneB_*, cloneC_*,
+      cloneD_*, cloneE_corners in gmail_audit/ alongside Gmail refs
+
+
+12. STILL PENDING / NEXT
+--------------------------------------------------------------------------------
+  OFFERED, NOT YET DONE
+  - Toolbar micro-parity: Gmail uses a vertical "more" menu (dots) and a
+    compact caret next to select-all; ours uses horizontal dots + a
+    wider chevron. Image shown, awaiting your go-ahead.
+  - "Conversation archived / Undo" snackbar: real Gmail shows it; our
+    spec currently scopes toasts to compose only (send/draft-saved).
+    Needs a spec amendment + undo wiring -- say the word.
+
+  KNOWN ACCEPTED DEVIATIONS (unchanged, spec-pinned)
+  - Right apps-rail ICONS: the 56px space is reserved, icons skipped
+    (they would be dead UI without a backend)
+  - Flag "! column" + label chips (spec L683), no category tabs, no
+    paging arrows / density menu / Gemini / apps grid (dead UI)
+  - Fonts: Google Sans/Roboto resolve only if installed locally
+    (offline-safe build), else system-ui fallback
+  - Compose minimize button renders but is non-functional (pre-existing)
+
+  HOUSEKEEPING
+  - Stop the background dev server still serving http://localhost:5173
+  - File the react-query 5.104 + React 19 notifyOnChangeProps bug as a
+    GitHub issue (per docs/agents/issue-tracker.md) -- still open from
+    the morning report
+
+================================================================================
+                         END OF END-OF-DAY REPORT
+================================================================================
