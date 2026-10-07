@@ -56,13 +56,14 @@ export const emailService = {
         Object.assign(existing, {
           subject: data.subject, preview: data.body.slice(0, 120),
           body: data.body, timestamp: new Date().toISOString(),
+          recipients: splitList(data.to), cc: splitList(data.cc), bcc: splitList(data.bcc),
         });
         return;
       }
       store.push({
         id, container: 'DRAFT', flags: [], userLabels: [], restoreTo: undefined,
         snoozedUntil: null, sender: 'Me', senderEmail: 'me@gmail.com',
-        recipients: [], cc: [], bcc: [],
+        recipients: splitList(data.to), cc: splitList(data.cc), bcc: splitList(data.bcc),
         subject: data.subject || '(no subject)', preview: data.body.slice(0, 120),
         body: data.body, timestamp: new Date().toISOString(),
         unread: false, attachments: [],

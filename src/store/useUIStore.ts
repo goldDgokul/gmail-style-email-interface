@@ -7,7 +7,14 @@ export const useUIStore = () => {
   const [search, setSearch]           = useState('');
   const [openEmailId, setOpenEmailId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [composeData, setComposeData] = useState<ComposeData | null>(null);
+  const [composeData, setComposeDataState] = useState<ComposeData | null>(null);
+  // Bumped on every compose open/replace so <ComposeWindow key=…> remounts
+  // with fresh field state (§0.6: a second compose replaces the first).
+  const [composeToken, setComposeToken] = useState(0);
+  const setComposeData = useCallback((data: ComposeData | null) => {
+    setComposeDataState(data);
+    setComposeToken(t => t + 1);
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toast, setToast]             = useState<string | null>(null);
 
@@ -40,7 +47,7 @@ export const useUIStore = () => {
   return { view, changeView, activeLabel, changeLabel,
            search, setSearch, openEmailId, setOpenEmailId,
            selectedIds, toggleSelect, selectAll, clearSelection,
-           composeData, setComposeData, sidebarOpen, setSidebarOpen,
+           composeData, setComposeData, composeToken, sidebarOpen, setSidebarOpen,
            toast, showToast, dismissToast };
 };
 export type UIStore = ReturnType<typeof useUIStore>;

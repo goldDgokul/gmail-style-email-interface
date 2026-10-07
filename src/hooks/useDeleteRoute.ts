@@ -2,6 +2,7 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { emailService } from '../services/mockEmailService';
 import { EMAIL_QK } from './useEmails';
 import type { Email } from '../types/email';
+import { PERMANENT_DELETE_CONTAINERS } from '../types/email';
 
 // One route for every Delete button (guardrail #15 / Q9 / Q14):
 // TRASH | SPAM | DRAFT → permanentDelete, everything else → moveToTrash.
@@ -14,7 +15,7 @@ export const useDeleteRoute = () => {
       const byId = new Map(emails.map(e => [e.id, e]));
       const permanent = ids.filter(id => {
         const c = byId.get(id)?.container;
-        return c === 'TRASH' || c === 'SPAM' || c === 'DRAFT';
+        return c !== null && c !== undefined && PERMANENT_DELETE_CONTAINERS.has(c);
       });
       const soft = ids.filter(id => !permanent.includes(id));
       if (permanent.length) await emailService.permanentDelete(permanent);

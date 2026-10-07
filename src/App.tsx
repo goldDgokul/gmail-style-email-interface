@@ -58,7 +58,7 @@ export default function App() {
         </main>
       </AppShell>
 
-      {ui.composeData && <ComposeWindow />}
+      {ui.composeData && <ComposeWindow key={ui.composeToken} />}
       <Toast message={ui.toast} onDismiss={ui.dismissToast} />
     </UIStoreContext.Provider>
   );

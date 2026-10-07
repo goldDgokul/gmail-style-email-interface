@@ -1,7 +1,7 @@
 // No threading — each Email is independent (§0.7)
 import { useEffect, useState } from 'react';
 import {
-  SNOOZE_PRESETS, type Email, type ComposeData, type SnoozePreset,
+  SNOOZE_PRESETS, PERMANENT_DELETE_CONTAINERS, type Email, type ComposeData, type SnoozePreset,
 } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
 import {
@@ -12,6 +12,7 @@ import { IconButton } from '../ui/IconButton';
 import { Avatar } from '../ui/Avatar';
 import { LabelChip } from '../ui/LabelChip';
 import { formatDate } from '../../utils/formatDate';
+import { draftComposeData } from '../../utils/draftCompose';
 
 const SNOOZE_MENU: { key: SnoozePreset; label: string }[] = [
   { key: 'tonight',   label: 'Tonight, 8:00 PM' },
@@ -39,7 +40,8 @@ export const EmailView = ({ email }: { email: Email }) => {
   }, [email?.id]);   // 'u' is unaffected: it never changes openEmailId
 
   const close = () => ui.setOpenEmailId(null);
-  const pending = archive.isPending || routeDelete.isPending || markRead.isPending;
+  const pending = archive.isPending || routeDelete.isPending || markRead.isPending
+    || moveToSpam.isPending || snooze.isPending;
 
   const openCompose = (data: Partial<ComposeData>) =>
     ui.setComposeData({ to: '', cc: '', bcc: '', subject: '', body: '', ...data });
@@ -75,7 +77,7 @@ export const EmailView = ({ email }: { email: Email }) => {
         <IconButton label="Archive" disabled={pending} onClick={() => { archive.mutate([email.id]); close(); }}>📥</IconButton>
         <IconButton label="Report spam" disabled={pending} onClick={() => { moveToSpam.mutate([email.id]); close(); }}>⚠️</IconButton>
         <IconButton
-          label={email.container === 'TRASH' || email.container === 'SPAM' || email.container === 'DRAFT' ? 'Delete forever' : 'Delete'}
+          label={email.container !== null && PERMANENT_DELETE_CONTAINERS.has(email.container) ? 'Delete forever' : 'Delete'}
           danger
           disabled={pending}
           onClick={() => { routeDelete.mutate([email.id]); close(); }}
@@ -98,6 +100,7 @@ export const EmailView = ({ email }: { email: Email }) => {
                   key={p.key}
                   type="button"
                   className="menu__item"
+                  disabled={snooze.isPending}
                   onClick={() => {
                     snooze.mutate({ id: email.id, until: SNOOZE_PRESETS[p.key]().toISOString() });
                     setSnoozeMenu(false);
@@ -152,9 +155,23 @@ export const EmailView = ({ email }: { email: Email }) => {
           )}
 
           <div className="email-view__actions">
-            <button type="button" className="btn" onClick={replyTo}>↩ Reply</button>
-            <button type="button" className="btn" onClick={replyAll}>↩↩ Reply all</button>
-            <button type="button" className="btn" onClick={forward}>→ Forward</button>
+            {email.container === 'DRAFT' ? (
+              // Reply/Forward on a draft would fabricate a second message —
+              // the only sensible action is editing the draft itself (§3)
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => { close(); ui.setComposeData(draftComposeData(email)); }}
+              >
+                ✎ Edit draft
+              </button>
+            ) : (
+              <>
+                <button type="button" className="btn" onClick={replyTo}>↩ Reply</button>
+                <button type="button" className="btn" onClick={replyAll}>↩↩ Reply all</button>
+                <button type="button" className="btn" onClick={forward}>→ Forward</button>
+              </>
+            )}
           </div>
         </div>
       </div>

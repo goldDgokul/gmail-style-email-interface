@@ -31,7 +31,8 @@ export const EmailToolbar = ({ visibleIds }: { visibleIds: string[] }) => {
     e => e.container !== null && PERMANENT_DELETE_CONTAINERS.has(e.container),
   );
 
-  const pending = archive.isPending || moveToSpam.isPending || routeDelete.isPending || markRead.isPending;
+  const pending = archive.isPending || moveToSpam.isPending || routeDelete.isPending
+    || markRead.isPending || restore.isPending;
   const hasSelection = safeIds.length > 0;
 
   const handleDelete = () => {
@@ -104,15 +105,15 @@ export const EmailToolbar = ({ visibleIds }: { visibleIds: string[] }) => {
         <IconButton label="Move to" disabled={pending} aria-expanded={moveMenu} onClick={() => setMoveMenu(v => !v)}>📂</IconButton>
         {moveMenu && (
           <span className="menu" style={{ top: 44, right: 0 }}>
-            <button type="button" className="menu__item"
+            <button type="button" className="menu__item" disabled={restore.isPending}
               onClick={() => { restore.mutate(safeIds); ui.clearSelection(); setMoveMenu(false); }}>
               📥 Inbox
             </button>
-            <button type="button" className="menu__item"
+            <button type="button" className="menu__item" disabled={moveToSpam.isPending}
               onClick={() => { moveToSpam.mutate(safeIds); ui.clearSelection(); setMoveMenu(false); }}>
               ⚠️ Spam
             </button>
-            <button type="button" className="menu__item menu__item--danger"
+            <button type="button" className="menu__item menu__item--danger" disabled={routeDelete.isPending}
               onClick={() => { routeDelete.mutate(safeIds); ui.clearSelection(); setMoveMenu(false); }}>
               🗑 Trash
             </button>

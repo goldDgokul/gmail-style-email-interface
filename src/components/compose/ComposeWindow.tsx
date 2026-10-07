@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ComposeData } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
-import { useSendEmail, useSaveDraft } from '../../hooks/useEmailMutations';
+import { useSendEmail, useSaveDraft, usePermanentDelete } from '../../hooks/useEmailMutations';
 import { IconButton } from '../ui/IconButton';
 
 const parseTokens = (s: string) => s.split(',').map(t => t.trim()).filter(Boolean);
@@ -23,6 +23,15 @@ export const ComposeWindow = () => {
   const autosave = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendEmail = useSendEmail();
   const saveDraft = useSaveDraft();
+  const discardDraft = usePermanentDelete();
+
+  // Set when this window is closed on purpose (✕ / Send / discard) — the
+  // unmount-save below must not fire for those paths, only for §0.6 "replace".
+  const settled = useRef(false);
+  const latest = useRef({ draftId, to, cc, bcc, subject, body });
+  useEffect(() => {
+    latest.current = { draftId, to, cc, bcc, subject, body };
+  }, [draftId, to, cc, bcc, subject, body]);
 
   // Debounced autosave, 2s, cleaned up on every change and on unmount (guardrails #6, #7)
   useEffect(() => {
@@ -34,6 +43,13 @@ export const ComposeWindow = () => {
     return () => { if (autosave.current) clearTimeout(autosave.current); };
   }, [subject, body, to, cc, bcc]);  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // §0.6 — a compose replaced by a second one (c / Reply while open) saves its content
+  useEffect(() => () => {
+    if (settled.current) return;
+    const s = latest.current;
+    if (s.subject || s.body) saveDraft.mutate({ ...s });
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSend = () => {
     if ([...parseTokens(to), ...parseTokens(cc), ...parseTokens(bcc)].length === 0) {
       setError('Please specify at least one recipient');   // never fail silently (guardrail Q20)
@@ -41,6 +57,7 @@ export const ComposeWindow = () => {
     }
     setError(null);
     if (autosave.current) clearTimeout(autosave.current);
+    settled.current = true;
     if (!sendEmail.isPending) sendEmail.mutate({ draftId, to, cc, bcc, subject, body });
     ui.setComposeData(null);
     ui.showToast('Message sent');
@@ -48,11 +65,20 @@ export const ComposeWindow = () => {
 
   const handleClose = () => {
     if (autosave.current) clearTimeout(autosave.current);
+    settled.current = true;
     if (subject || body) {
       saveDraft.mutate({ draftId, to, cc, bcc, subject, body });
       ui.showToast('Draft saved');
     }
     ui.setComposeData(null);   // empty compose → nothing written (§0.6)
+  };
+
+  // 🗑 discards: no save, and any autosaved row is removed outright
+  const handleDiscard = () => {
+    if (autosave.current) clearTimeout(autosave.current);
+    settled.current = true;
+    discardDraft.mutate([draftId]);
+    ui.setComposeData(null);
   };
 
   return (
@@ -123,7 +149,7 @@ export const ComposeWindow = () => {
         <IconButton label="Attach files">📎</IconButton>
         <IconButton label="Formatting options">A</IconButton>
         <IconButton label="More options">⋯</IconButton>
-        <IconButton label="Discard draft" onClick={handleClose}>🗑</IconButton>
+        <IconButton label="Discard draft" onClick={handleDiscard}>🗑</IconButton>
       </div>
     </section>
   );

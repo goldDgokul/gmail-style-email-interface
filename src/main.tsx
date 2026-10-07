@@ -9,6 +9,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: Infinity,
+      gcTime: Infinity,
+      retry: false,
       // Default prop-tracking notifications do not fire in this React 19 +
       // react-query 5.104 build (listeners skipped, data changes ignored).
       // Explicit 'all' keeps every subscriber rendering on any change.

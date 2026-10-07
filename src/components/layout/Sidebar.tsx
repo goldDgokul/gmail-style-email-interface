@@ -36,7 +36,7 @@ export const Sidebar = () => {
         Compose
       </button>
 
-      <nav className="sidebar__nav" aria-label="Mailboxes">
+      <nav className="sidebar__nav" aria-label="Views">
         {ITEMS.map(item => {
           const active = ui.view === item.view;
           return (

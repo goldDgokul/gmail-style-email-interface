@@ -9,6 +9,7 @@ import {
 import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { LabelChip } from '../ui/LabelChip';
 import { formatDate } from '../../utils/formatDate';
+import { draftComposeData } from '../../utils/draftCompose';
 
 const SNOOZE_MENU: { key: SnoozePreset; label: string }[] = [
   { key: 'tonight',   label: 'Tonight, 8:00 PM' },
@@ -41,13 +42,22 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
   const unsnooze = useUnsnooze();
   const routeDelete = useDeleteRoute();
 
-  const pending = toggleStar.isPending || archive.isPending || routeDelete.isPending;
+  const pending = toggleStar.isPending || toggleImportant.isPending || archive.isPending
+    || snooze.isPending || unsnooze.isPending || routeDelete.isPending;
   const starOn = email.flags.includes('STARRED');
   const importantOn = email.flags.includes('IMPORTANT');
   const snoozed = snoozedIntoFuture(email);
 
-  // Row click opens the email — and only that (guardrail #19)
-  const open = () => ui.setOpenEmailId(email.id);
+  // Row click opens the email — and only that (guardrail #19);
+  // a draft opens in compose for editing instead (§3 re-editing a draft)
+  const open = () => {
+    if (email.container === 'DRAFT') {
+      ui.setOpenEmailId(null);
+      ui.setComposeData(draftComposeData(email));
+      return;
+    }
+    ui.setOpenEmailId(email.id);
+  };
 
   const stop = (e: MouseEvent) => e.stopPropagation();
 
@@ -58,7 +68,9 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
       onClick={open}
       role="button"
       tabIndex={0}
-      onKeyDown={e => { if (e.key === 'Enter') open(); }}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      }}
     >
       <span className="row__check" onClick={stop}>
         <input
@@ -149,6 +161,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
                       snooze.mutate({ id: email.id, until: SNOOZE_PRESETS[p.key]().toISOString() });
                       setSnoozeMenu(false);
                     }}
+                    disabled={snooze.isPending}
                   >
                     ⏰ {p.label}
                   </button>
@@ -157,6 +170,7 @@ export const EmailRow = ({ email, checked }: { email: Email; checked: boolean })
                   <button
                     type="button"
                     className="menu__item"
+                    disabled={unsnooze.isPending}
                     onClick={() => { unsnooze.mutate(email.id); setSnoozeMenu(false); }}
                   >
                     ↩ Wake up now

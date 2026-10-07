@@ -25,6 +25,13 @@
   --c-compose-hd: #1a73e8;
   --c-chip: #e8eaed;
 
+  /* On-colour surfaces */
+  --c-on-primary: #ffffff;
+  --c-toast-bg: #323232;
+  --c-on-toast: #ffffff;
+  --c-on-compose: rgba(255, 255, 255, 0.9);
+  --c-on-compose-hover: rgba(255, 255, 255, 0.15);
+
   --c-unread-weight: 700;
 
   /* Avatar pastels (deterministic by sender) */
@@ -57,6 +64,7 @@
 
   /* Motion */
   --dur: 140ms;
+  --dur-spin: 700ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -342,7 +350,7 @@ input, textarea {
 
 .btn--primary {
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
 }
 
 .btn--primary:hover { background: var(--c-primary-hover); }
@@ -375,7 +383,7 @@ input, textarea {
   height: 18px;
   padding: 0 6px;
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
   border-radius: var(--r-full);
   font-size: 11px;
   font-weight: 500;
@@ -404,7 +412,7 @@ input, textarea {
   border: 3px solid var(--c-border);
   border-top-color: var(--c-primary);
   border-radius: 50%;
-  animation: spin 700ms linear infinite;
+  animation: spin var(--dur-spin) linear infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -431,8 +439,8 @@ input, textarea {
   left: 50%;
   transform: translateX(-50%);
   padding: 12px 24px;
-  background: #323232;
-  color: #fff;
+  background: var(--c-toast-bg);
+  color: var(--c-on-toast);
   border-radius: var(--r-sm);
   box-shadow: var(--sh-2);
   z-index: 600;
@@ -565,9 +573,9 @@ input, textarea {
 .row:hover .row__date { display: none; }
 
 @media (max-width: 768px) {
-  .row { grid-template-columns: 36px 1fr 72px; }
-  .row__star, .row__flag { display: none; }
-  .row__sender { width: 120px; flex-shrink: 0; }
+  /* Guardrail #9 — rows show [checkbox · sender · subject] only */
+  .row { grid-template-columns: 40px 120px 1fr; }
+  .row__star, .row__flag, .row__meta { display: none; }
 }
 
 /* ============================================================
@@ -728,13 +736,13 @@ input, textarea {
   height: 40px;
   padding: 0 8px 0 16px;
   background: var(--c-compose-hd);
-  color: #fff;
+  color: var(--c-on-primary);
   font-size: var(--fs-base);
   font-weight: 500;
 }
 
-.compose__header .icon-btn { color: rgba(255, 255, 255, 0.9); }
-.compose__header .icon-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.compose__header .icon-btn { color: var(--c-on-compose); }
+.compose__header .icon-btn:hover { background: var(--c-on-compose-hover); }
 
 .compose__fields { padding: 4px 16px; }
 
@@ -798,7 +806,7 @@ input, textarea {
   height: 36px;
   padding: 0 20px;
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
   border-radius: var(--r-full);
   font-weight: 500;
   transition: background var(--dur) var(--ease);
