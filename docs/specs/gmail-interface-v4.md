@@ -650,7 +650,7 @@ export const useKeyboardShortcuts = (
 
 ## 9. Design System (`src/index.css`)
 
-Unchanged from v3: full token system (colors, typography, layout, elevation, spacing, radii) with `--dur: 140ms` and `@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms } }`, `body { height: 100dvh; overflow: hidden }`. Fonts: `--font-sans: "Google Sans", "Roboto", system-ui, …` — the Google Fonts `@import` is deliberately omitted (offline-safe build; Google Sans/Roboto resolve when installed locally, otherwise `system-ui`). Token deviation from v3: `--c-bg: #f8fafd` — measured from Gmail reference screenshots (v3's `#f6f8fc` was an estimate; Gmail's top bar, sidebar, and right gutter all render `#f8fafd`).
+Unchanged from v3: full token system (colors, typography, layout, elevation, spacing, radii) with `--dur: 140ms` and `@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms } }`, `body { height: 100dvh; overflow: hidden }`. Fonts: `--font-sans: "Google Sans", "Roboto", system-ui, …` — the Google Fonts `@import` is deliberately omitted (offline-safe build; Google Sans/Roboto resolve when installed locally, otherwise `system-ui`). Token deviation from v3: `--c-bg: #f8fafd` — measured from Gmail reference screenshots (v3's `#f6f8fc` was an estimate; Gmail's top bar, sidebar, and right gutter all render `#f8fafd`). New tokens: `--rail-w: 56px` (right apps-rail gutter), `--c-scroll-thumb: #cccccc`, `--c-scroll-thumb-hover: #9aa0a6`.
 
 ---
 
@@ -659,11 +659,11 @@ Unchanged from v3: full token system (colors, typography, layout, elevation, spa
 ### `AppShell.tsx`
 ```css
 .shell { display: grid; grid-template-rows: var(--topbar-h) 1fr;
-         grid-template-columns: var(--sidebar-w) 1fr; height: 100dvh; overflow: hidden; }
-.shell[data-sidebar-closed] { grid-template-columns: 0 1fr; }
+         grid-template-columns: var(--sidebar-w) 1fr var(--rail-w); height: 100dvh; overflow: hidden; }
+.shell[data-sidebar-closed] { grid-template-columns: 0 1fr var(--rail-w); }
 .sidebar { transition: width var(--dur) var(--ease); overflow: hidden; }
 ```
-Grid shell only: TopBar (col-span 2), Sidebar, main = `EmailList` or `EmailView`; `ComposeWindow` and `Toast` are `position: fixed`.
+Grid shell only: TopBar (`grid-column: 1 / -1`), Sidebar (col 1), main = `EmailList` or `EmailView` (col 2) — then an **empty right rail gutter** (col 3, `--rail-w: 56px`, painted by `body { background: var(--c-bg) }`) that reserves Gmail's apps-rail space so the white card closes 56px short of the window edge (the rail's *icons* stay out of scope — see accepted deviations); `@media (max-width: 768px) { :root { --rail-w: 0px } }`. The card carries a 16px top-**left** radius only — Gmail's top-right corner is square (measured). The list scrollbar (when content overflows) is Gmail-style: `::-webkit-scrollbar { width: 12px }`, transparent track, thumb `--c-scroll-thumb` (`#cccccc`), hover `--c-scroll-thumb-hover` (`#9aa0a6`). `ComposeWindow` and `Toast` are `position: fixed`.
 
 ### `TopBar.tsx`
 `[☰] Gmail [search id="search-input"] [?] [⚙] [avatar]` — sticky, `grid-column: 1 / -1`, `z-index: 200`.
@@ -680,12 +680,12 @@ Compose button → `setComposeData({ ...EMPTY_COMPOSE })`.
 `<EmailToolbar>` + scrollable list of `<EmailRow>` + `<EmptyState>` when empty + `<Spinner>` when loading. Emits `visibleIds` (the rendered ids, in order) to `App.tsx` for keyboard navigation and the selection intersection.
 
 ### `EmailRow.tsx`
-Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-1] [Date/actions 90px]`, row height `var(--row-h)`.
+Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-1] [Date/actions 92px]`, row height `var(--row-h)`, row padding `8px 12px` (checkbox sits 19px from the card edge — Gmail-measured).
 `@media (max-width: 768px)`: hide star/flag **and `.row__meta` (date/actions)** — grid becomes `40px 120px 1fr`, i.e. exactly `[checkbox · sender · subject]`; **subject always present**.
 
 - Row click / Enter / Space → **drafts**: `setComposeData(draftComposeData(email))` (§0.6 re-edit); **everything else**: `setOpenEmailId(id)` **only** — no mark-read here (guardrail #19).
 - Every inner control (`checkbox`, star, flag, hover archive/delete/mark-unread/snooze icons, label chips, attachment badges) → `e.stopPropagation()`; each is `disabled={mutation.isPending}` (snooze items gate on `snooze.isPending`, wake on `unsnooze.isPending`).
-- Hover icons render left-to-right in Gmail's measured order — **archive, delete, mark-as-unread, snooze** — and use the container-keyed handlers: archive → `archive([id])` (glyph: archive box with `+`); delete → delete route (0.3); mark-as-unread → `markRead({ ids: [id], unread: true })` (an explicit control, so guardrail #19 is untouched — it governs the mark-*read* path only); snooze → preset menu (+ "↩ Wake up now" when snoozed).
+- Hover icons render left-to-right in Gmail's measured order — **archive, delete, mark-as-unread, snooze** — inside an **opaque action box** (`position: absolute; right: 12px; top/bottom: 0`, background = the row's hover colour, or `--c-selected` when checked) that replaces the date and covers the tail of the preview, so the icons never sit on top of text (Gmail replaces content, it does not overlay it). Handlers are container-keyed: archive → `archive([id])` (glyph: archive box with `+`); delete → delete route (0.3); mark-as-unread → `markRead({ ids: [id], unread: true })` (an explicit control, so guardrail #19 is untouched — it governs the mark-*read* path only); snooze → preset menu (+ "↩ Wake up now" when snoozed).
 - `aria-label` on every icon control; `aria-pressed` on star/flag.
 - Carries a `// No threading — each Email is independent (§0.7)` comment (`EmailList.tsx` carries it too).
 
