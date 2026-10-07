@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 dev.log
+
+# Local reports (kept on disk, not in the repo)
+EOD_REPORT.txt
