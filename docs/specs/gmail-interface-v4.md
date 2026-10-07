@@ -676,7 +676,9 @@ Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-
 - Carries a `// No threading — each Email is independent (§0.7)` comment.
 
 ### `EmailToolbar.tsx`
-**No selection:** `[↺ Refresh] [⋯ More]`. **With selection:** `[☐ select all] [Archive] [Spam] [Delete] [Mark read ▾] [Move to ▾] [Labels ▾]`.
+**No selection:** `[↺ Refresh] [⋯ More]`. **With selection:** `[☐ select all] [Archive] [Spam] [Delete] [Mark read ▾] [Move to ▾]`.
+
+**No `Labels ▾` button.** User labels are seed-data filter chips with no tagging/CRUD UI in v1 (Q2, `GLOSSARY.md` "User Label") — a toolbar control that cannot act on a label would be dead UI. The service exposes no label-mutation operation; row/view label chips only open the `'label'` pseudo-view.
 
 ```typescript
 const safeIds = [...selectedIds].filter(id => visibleIdSet.has(id));   // guardrail #20
@@ -809,7 +811,7 @@ Each step must compile before the next begins.
 11. `layout/AppShell.tsx` — grid only; check 1440/1280/1024/768
 12. `layout/TopBar.tsx` + `layout/Sidebar.tsx` — verify view switching, label pseudo-view, badges on Inbox + labels only, compose open
 13. `email/EmailRow.tsx` + `email/EmailList.tsx` — verify stop-propagation, row click sets `openEmailId` only, filtering, `visibleIds` emission
-14. `email/EmailToolbar.tsx` — intersection + partition + labels — **`npm run build` checkpoint**
+14. `email/EmailToolbar.tsx` — intersection + partition — **`npm run build` checkpoint**
 15. `email/EmailView.tsx` — mark-read effect, prefills, snooze menu, container-routed actions
 16. `compose/ComposeWindow.tsx` — draftId-at-open, autosave debounce + `DRAFT`-only update, send validation, mobile sheet
 17. `hooks/useKeyboardShortcuts.ts` + wire actions
