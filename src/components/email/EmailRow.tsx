@@ -1,7 +1,7 @@
 // No threading — each Email is independent (§0.7)
 import { useState, type MouseEvent } from 'react';
 import type { Email } from '../../types/email';
-import { SNOOZE_PRESETS, type SnoozePreset } from '../../types/email';
+import { SNOOZE_PRESETS } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
 import {
   useToggleStar, useToggleImportant, useArchive, useSnooze, useUnsnooze,
@@ -10,15 +10,7 @@ import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { LabelChip } from '../ui/LabelChip';
 import { formatDate } from '../../utils/formatDate';
 import { draftComposeData } from '../../utils/draftCompose';
-
-const SNOOZE_MENU: { key: SnoozePreset; label: string }[] = [
-  { key: 'tonight',   label: 'Tonight, 8:00 PM' },
-  { key: 'tomorrow',  label: 'Tomorrow, 8:00 AM' },
-  { key: 'next-week', label: 'Next week, 8:00 AM' },
-];
-
-const snoozedIntoFuture = (email: Email) =>
-  email.snoozedUntil !== null && new Date(email.snoozedUntil).getTime() > Date.now();
+import { SNOOZE_MENU, snoozedIntoFuture } from '../../utils/snooze';
 
 export const EmailRow = ({ email, checked }: { email: Email; checked: boolean }) => {
   const ui = useUI();

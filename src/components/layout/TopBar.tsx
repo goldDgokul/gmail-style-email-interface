@@ -4,7 +4,7 @@ import { IconButton } from '../ui/IconButton';
 import { Avatar } from '../ui/Avatar';
 
 export const TopBar = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => {
-  const { search, setSearch, changeView, view } = useUI();
+  const { search, setSearch } = useUI();
   const [draft, setDraft] = useState(search);
   const [lastSearch, setLastSearch] = useState(search);
 
@@ -26,7 +26,7 @@ export const TopBar = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => 
     <header className="topbar">
       <div className="topbar__brand">
         <IconButton label="Toggle navigation menu" onClick={onToggleSidebar}>☰</IconButton>
-        <span className="topbar__logo">Email</span>
+        <span className="topbar__logo">Gmail</span>
       </div>
 
       <div className="topbar__search">
@@ -45,9 +45,6 @@ export const TopBar = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => 
       </div>
 
       <div className="topbar__actions">
-        {view !== 'inbox' && search === '' && (
-          <IconButton label="Back to inbox" onClick={() => changeView('inbox')}>↩</IconButton>
-        )}
         <IconButton label="Help">?</IconButton>
         <IconButton label="Settings">⚙</IconButton>
         <span className="topbar__avatar">

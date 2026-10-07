@@ -1,3 +1,4 @@
+// No threading — each Email is independent (§0.7)
 import { useEffect } from 'react';
 import type { Email } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
@@ -25,7 +26,7 @@ export const EmailList = ({
 
   return (
     <div className="list">
-      <EmailToolbar visibleIds={ids} />
+      <EmailToolbar visibleIds={ids} emails={emails} />
       <div className="list__scroll">
         {emails.length === 0 ? (
           <EmptyState view={ui.view} search={ui.search} activeLabel={ui.activeLabel} />

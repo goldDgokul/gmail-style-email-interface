@@ -51,6 +51,9 @@ export interface ComposeData {
   body: string;
 }
 
+export const EMPTY_COMPOSE: ComposeData =
+  { to: '', cc: '', bcc: '', subject: '', body: '' };
+
 export type SnoozePreset = 'tonight' | 'tomorrow' | 'next-week';
 
 export const SNOOZE_PRESETS: Record<SnoozePreset, () => Date> = {

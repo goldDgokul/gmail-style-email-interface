@@ -55,10 +55,12 @@ A data-keyed rule cannot be fooled by which view happens to be rendered (importa
 One query key: `['emails']`. Views, counts, selection targets all derive from this one cached array. No per-view keys, no `getById` query.
 
 ### 0.5 Drafts are data, not mail
-`DRAFT` emails have `recipients: []` until sent, are excluded from All Mail, are excluded from search results' "mail corpus" reasoning, and **bypass Trash when deleted** (`container ∈ PERMANENT`).
+Seed drafts ship with `recipients: []`; `saveDraft` **persists `to`/`cc`/`bcc`** so a re-edited draft keeps its recipients. Drafts are excluded from All Mail, are excluded from search results' "mail corpus" reasoning, and **bypass Trash when deleted** (`container ∈ PERMANENT`).
 
 ### 0.6 One compose window; it owns its identity from open
 Only one `ComposeWindow` exists at a time (opening a second replaces the first, saving a draft if it has content). The compose is assigned `draftId = existingDraftId ?? crypto.randomUUID()` **at open**; the store row is materialized only on first save. Closing with no subject and no body writes nothing.
+
+Replacement works by remount: the store keeps a `composeToken` bumped on every `setComposeData`, and `App.tsx` renders `<ComposeWindow key={ui.composeToken} />` so field state (and the stale-draftId hazard) can never leak between opens. A replaced compose saves its content on unmount unless it settled deliberately (✕ / Send / discard). A draft row re-opens the window via `setComposeData(draftComposeData(email))` — drafts never open the read-only EmailView from a row click.
 
 ### 0.7 No threading
 Each email is an independent message. State this as a comment in `EmailList.tsx`.
@@ -112,7 +114,12 @@ import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: Infinity, gcTime: Infinity, retry: false },
+    queries: {
+      staleTime: Infinity, gcTime: Infinity, retry: false,
+      // Implementation note: prop-tracking notifications do not fire in this
+      // React 19 + react-query 5.104 build — 'all' keeps subscribers rendering.
+      notifyOnChangeProps: 'all',
+    },
   },
 });
 
@@ -141,10 +148,16 @@ src/
 ├── hooks/
 │   ├── useEmails.ts            # useQuery + selectForView + badges
 │   ├── useEmailMutations.ts    # all useMutation hooks
+│   ├── useDeleteRoute.ts       # thin wrapper: emailService.deleteRoute
 │   └── useKeyboardShortcuts.ts
 ├── store/
 │   ├── useUIStore.ts
 │   └── UIStoreContext.ts
+├── utils/
+│   ├── formatDate.ts           # relative / absolute row + view dates
+│   ├── draftCompose.ts         # Email → ComposeData (draft re-open)
+│   ├── snooze.ts               # SNOOZE_MENU + snoozedIntoFuture predicate
+│   └── splitList.ts            # "a, b" → ['a','b'] (recipients, validation)
 └── components/
     ├── layout/   AppShell.tsx  TopBar.tsx  Sidebar.tsx
     ├── email/    EmailList.tsx EmailRow.tsx EmailToolbar.tsx EmailView.tsx
@@ -315,13 +328,14 @@ export const emailService = {
         Object.assign(existing, {
           subject: data.subject, preview: data.body.slice(0, 120),
           body: data.body, timestamp: new Date().toISOString(),
+          recipients: splitList(data.to), cc: splitList(data.cc), bcc: splitList(data.bcc),
         });
         return;
       }
       store.push({
         id, container: 'DRAFT', flags: [], userLabels: [], restoreTo: undefined,
         snoozedUntil: null, sender: 'Me', senderEmail: 'me@gmail.com',
-        recipients: [], cc: [], bcc: [],
+        recipients: splitList(data.to), cc: splitList(data.cc), bcc: splitList(data.bcc),
         subject: data.subject || '(no subject)', preview: data.body.slice(0, 120),
         body: data.body, timestamp: new Date().toISOString(),
         unread: false, attachments: [],
@@ -660,35 +674,30 @@ Flex column: compose button (`flex-shrink: 0`, top of column — *not* sticky) t
 
 Items: Inbox, Starred, Important, Snoozed, Sent, Drafts, Spam, Trash, All Mail — then `── Labels ──` with `changeLabel(name)` chips.
 Unread pill: **rendered only for Inbox and user-label items** (guardrail #14), value from `selectUnreadCount(emails, view, activeLabel)`. Inbox uses `'inbox'` + `null`; a label uses `'label'` + its name.
-Compose button → `setComposeData({ to:'', cc:'', bcc:'', subject:'', body:'' })`.
+Compose button → `setComposeData({ ...EMPTY_COMPOSE })`.
 
 ### `EmailList.tsx`
 `<EmailToolbar>` + scrollable list of `<EmailRow>` + `<EmptyState>` when empty + `<Spinner>` when loading. Emits `visibleIds` (the rendered ids, in order) to `App.tsx` for keyboard navigation and the selection intersection.
 
 ### `EmailRow.tsx`
 Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-1] [Date/actions 90px]`, row height `var(--row-h)`.
-`@media (max-width: 768px)`: hide star/flag/date, sender width 120px — **subject always present**.
+`@media (max-width: 768px)`: hide star/flag **and `.row__meta` (date/actions)** — grid becomes `40px 120px 1fr`, i.e. exactly `[checkbox · sender · subject]`; **subject always present**.
 
-- Row click / Enter → `setOpenEmailId(id)` **only** — no mark-read here (guardrail #19).
-- Every inner control (`checkbox`, star, flag, hover archive/trash/snooze icons, label chips, attachment badges) → `e.stopPropagation()`; each is `disabled={mutation.isPending}`.
-- Hover icons use the container-keyed handlers: archive → `archive([id])`; trash → delete route (0.3); snooze → preset menu.
+- Row click / Enter / Space → **drafts**: `setComposeData(draftComposeData(email))` (§0.6 re-edit); **everything else**: `setOpenEmailId(id)` **only** — no mark-read here (guardrail #19).
+- Every inner control (`checkbox`, star, flag, hover archive/trash/snooze icons, label chips, attachment badges) → `e.stopPropagation()`; each is `disabled={mutation.isPending}` (snooze items gate on `snooze.isPending`, wake on `unsnooze.isPending`).
+- Hover icons use the container-keyed handlers: archive → `archive([id])`; trash → delete route (0.3); snooze → preset menu (+ "↩ Wake up now" when snoozed).
 - `aria-label` on every icon control; `aria-pressed` on star/flag.
-- Carries a `// No threading — each Email is independent (§0.7)` comment.
+- Carries a `// No threading — each Email is independent (§0.7)` comment (`EmailList.tsx` carries it too).
 
 ### `EmailToolbar.tsx`
-**No selection:** `[↺ Refresh] [⋯ More]`. **With selection:** `[☐ select all] [Archive] [Spam] [Delete] [Mark read ▾] [Move to ▾]`.
+**No selection:** `[↺ Refresh] [⋯ More]` (More menu: `☐ Select all`, `✔ Mark all as read`). **With selection:** `[☐ select all] [Archive] [Spam] [Delete] [Mark read ▾] [Move to ▾]`.
+The leading `☐` **selects all visible**; once every visible row is selected it becomes `Clear selection` (toggles). The toolbar receives `emails` as a prop — it never reads query data itself (Refresh is the only `queryClient` use).
 
 **No `Labels ▾` button.** User labels are seed-data filter chips with no tagging/CRUD UI in v1 (Q2, `GLOSSARY.md` "User Label") — a toolbar control that cannot act on a label would be dead UI. The service exposes no label-mutation operation; row/view label chips only open the `'label'` pseudo-view.
 
 ```typescript
-const safeIds = [...selectedIds].filter(id => visibleIdSet.has(id));   // guardrail #20
-const partition = safeIds.reduce((acc, id) => {
-  const c = emailById(id)?.container;
-  (PERMANENT_DELETE_CONTAINERS.has(c as Container) ? acc.permanent : acc.soft).push(id);
-  return acc;
-}, { permanent: [] as string[], soft: [] as string[] });
-if (partition.permanent.length) permanentDelete.mutate(partition.permanent);
-if (partition.soft.length)      moveToTrash.mutate(partition.soft);
+const targetIds = [...selectedIds].filter(id => visibleIdSet.has(id));   // guardrail #20
+routeDelete.mutate(targetIds);   // TRASH|SPAM|DRAFT partition lives in emailService.deleteRoute (0.3)
 clearSelection();
 ```
 Button label: `"Delete forever"` when **all** selected containers are in `PERMANENT_DELETE_CONTAINERS`, else `"Delete"`. Refresh = `invalidateQueries({ queryKey: EMAIL_QK })`.
@@ -707,7 +716,9 @@ Body: `<h1>` subject → user-label chips → header row (avatar, sender, `sende
 
 Prefills (unchanged): Reply → `to: senderEmail`, `subject: Re: …`, quoted body; Reply all → recipients included; Forward → `Fwd: …`, empty `to`, forwarded-message header block.
 
-**Snooze menu:** Tonight 8pm / Tomorrow 8am / Next week → `snooze.mutate({ id, until: SNOOZE_PRESETS[p]().toISOString() })` (service no-ops if not INBOX).
+**Snooze menu:** Tonight 8pm / Tomorrow 8am / Next week → `snooze.mutate({ id, until: SNOOZE_PRESETS[p]().toISOString() })` (service no-ops if not INBOX), plus **`↩ Wake up now`** when snoozed → `unsnooze.mutate(id)`. All menu items `disabled={mutation.isPending}`.
+
+**Drafts:** a draft opened via j/k shows `[✎ Edit draft]` in place of Reply/Reply-all/Forward — it closes the view and opens ComposeWindow prefilled (`draftComposeData`). Reply/Forward never run against a draft (they would fabricate a second message).
 
 ### `ComposeWindow.tsx`
 `position: fixed; bottom: 0; right: 24px; width: var(--compose-w)`; `@media (max-width: 768px)` → full-width bottom-sheet. Header `--c-compose-hd` with minimize / fullscreen / close.
@@ -749,6 +760,12 @@ const handleClose = () => {
 };
 ```
 Fields: `To` (with inline red error beneath), `Cc/Bcc` toggle, `Subject`, body textarea (`min-height: 200px`), footer `[Send ▾] [📎] [A] [⋯] [🗑]`. Reply prefills set `composeData.replyToId`.
+
+Implementation notes (amendments to the snippet above):
+- The window renders as `<ComposeWindow key={ui.composeToken} />`; the token remounts it on every open/replace (§0.6). Payload reads go through a `latest` ref so handlers never rebuild the `{draftId, to, cc, bcc, subject, body}` clump.
+- Unmount saves the pending content **unless** `settled` was set (✕ / Send / 🗑) — that is the "replace saves its draft" path.
+- **🗑 discards**: clears the autosave timer, `permanentDelete([draftId])` (no-op if never materialized), closes with no save and no toast.
+- Recipient validation reuses the shared `splitList` from `utils/splitList.ts`.
 
 ### `ui/` atoms
 `Avatar` (initials, deterministic pastel), `Badge`, `IconButton` (`aria-label` required), `LabelChip` (click → `changeLabel`, `stopPropagation`), `Spinner`, `Toast` (fixed bottom-center, auto-dismiss), `EmptyState`.
@@ -803,17 +820,18 @@ Each step must compile before the next begins.
 3. `src/types/email.ts` — §3 exactly
 4. `src/data/mockEmails.ts` — 25 emails per §4
 5. `src/services/mockEmailService.ts` — **`npm run build` checkpoint**
-6. `src/main.tsx` — provider + devtools + `staleTime: Infinity`
+6. `src/main.tsx` — provider + devtools + `staleTime/gcTime: Infinity, retry: false` + `notifyOnChangeProps: 'all'`
 7. `src/hooks/useEmails.ts` — `selectForView`, `selectUnreadCount`
 8. `src/hooks/useEmailMutations.ts`
+8b. `src/utils/` — `formatDate`, `snooze`, `splitList` (+ `draftCompose` with the compose step); `hooks/useDeleteRoute.ts`
 9. `src/store/useUIStore.ts` + `UIStoreContext.ts` — **`npm run build` checkpoint**
 10. `ui/` atoms
 11. `layout/AppShell.tsx` — grid only; check 1440/1280/1024/768
 12. `layout/TopBar.tsx` + `layout/Sidebar.tsx` — verify view switching, label pseudo-view, badges on Inbox + labels only, compose open
-13. `email/EmailRow.tsx` + `email/EmailList.tsx` — verify stop-propagation, row click sets `openEmailId` only, filtering, `visibleIds` emission
-14. `email/EmailToolbar.tsx` — intersection + partition — **`npm run build` checkpoint**
-15. `email/EmailView.tsx` — mark-read effect, prefills, snooze menu, container-routed actions
-16. `compose/ComposeWindow.tsx` — draftId-at-open, autosave debounce + `DRAFT`-only update, send validation, mobile sheet
+13. `email/EmailRow.tsx` + `email/EmailList.tsx` — verify stop-propagation, row click sets `openEmailId` only (drafts open compose), filtering, `visibleIds` emission
+14. `email/EmailToolbar.tsx` — intersection + delete-route label — **`npm run build` checkpoint**
+15. `email/EmailView.tsx` — mark-read effect, prefills, snooze menu, container-routed actions, draft **Edit draft**
+16. `compose/ComposeWindow.tsx` — draftId-at-open, keyed remount, autosave debounce + `DRAFT`-only update, discard, send validation, mobile sheet
 17. `hooks/useKeyboardShortcuts.ts` + wire actions
 18. `App.tsx` — context provider, derived `visibleIds`, auto-close effect, keyboard, Toast — **final `npm run build` checkpoint**
 
@@ -854,11 +872,14 @@ Each step must compile before the next begins.
 - [ ] Send <2s after open creates the record as `SENT` with the open-assigned id
 - [ ] A save in flight across Send finds `SENT` and no-ops — no ghost draft appears
 - [ ] Sending an existing draft transitions the same id `DRAFT → SENT`; the draft leaves Drafts
+- [ ] A draft row (click or Enter) opens ComposeWindow prefilled with `draftId`/subject/body/recipients — never EmailView; EmailView opened via `j`/`k` shows **Edit draft** instead of Reply
+- [ ] 🗑 discards without saving (any autosaved row is removed); a replaced compose (`c`/Reply while open) remounts fresh and saves its previous content
 - [ ] Zero recipients → inline error, window stays open; Cc-only send succeeds
 - [ ] Reply/Reply-all/Forward prefill correctly
 
 **Keyboard & read state**
 - [ ] `c` `/` `j` `k` `Escape` `e` `#` `s` `u` work; all silent while typing
+- [ ] Rows activate with Enter **and** Space
 - [ ] `j` opens the first email when none is open; `k` does nothing at the top
 - [ ] Opening by click **or** keyboard marks read (one effect in `EmailView`)
 - [ ] `u` marks unread while viewing and is not immediately overridden

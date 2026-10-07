@@ -1,7 +1,8 @@
 // No threading — each Email is independent (§0.7)
 import { useEffect, useState } from 'react';
 import {
-  SNOOZE_PRESETS, PERMANENT_DELETE_CONTAINERS, type Email, type ComposeData, type SnoozePreset,
+  SNOOZE_PRESETS, PERMANENT_DELETE_CONTAINERS, EMPTY_COMPOSE,
+  type Email, type ComposeData,
 } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
 import {
@@ -13,12 +14,7 @@ import { Avatar } from '../ui/Avatar';
 import { LabelChip } from '../ui/LabelChip';
 import { formatDate } from '../../utils/formatDate';
 import { draftComposeData } from '../../utils/draftCompose';
-
-const SNOOZE_MENU: { key: SnoozePreset; label: string }[] = [
-  { key: 'tonight',   label: 'Tonight, 8:00 PM' },
-  { key: 'tomorrow',  label: 'Tomorrow, 8:00 AM' },
-  { key: 'next-week', label: 'Next week, 8:00 AM' },
-];
+import { SNOOZE_MENU } from '../../utils/snooze';
 
 const quote = (email: Email) =>
   `\n\nOn ${formatDate(email.timestamp)}, ${email.sender} <${email.senderEmail}> wrote:\n> ${email.body.replace(/\n/g, '\n> ')}`;
@@ -44,7 +40,7 @@ export const EmailView = ({ email }: { email: Email }) => {
     || moveToSpam.isPending || snooze.isPending;
 
   const openCompose = (data: Partial<ComposeData>) =>
-    ui.setComposeData({ to: '', cc: '', bcc: '', subject: '', body: '', ...data });
+    ui.setComposeData({ ...EMPTY_COMPOSE, ...data });
 
   const isMine = email.senderEmail === 'gokul@example.com' || email.sender === 'Me';
 

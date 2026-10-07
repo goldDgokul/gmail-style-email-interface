@@ -3,8 +3,7 @@ import type { ComposeData } from '../../types/email';
 import { useUI } from '../../store/UIStoreContext';
 import { useSendEmail, useSaveDraft, usePermanentDelete } from '../../hooks/useEmailMutations';
 import { IconButton } from '../ui/IconButton';
-
-const parseTokens = (s: string) => s.split(',').map(t => t.trim()).filter(Boolean);
+import { splitList } from '../../utils/splitList';
 
 export const ComposeWindow = () => {
   const ui = useUI();
@@ -38,7 +37,7 @@ export const ComposeWindow = () => {
     if (!subject && !body) return;
     if (autosave.current) clearTimeout(autosave.current);
     autosave.current = setTimeout(() => {
-      saveDraft.mutate({ draftId, to, cc, bcc, subject, body });
+      saveDraft.mutate({ ...latest.current });
     }, 2000);
     return () => { if (autosave.current) clearTimeout(autosave.current); };
   }, [subject, body, to, cc, bcc]);  // eslint-disable-line react-hooks/exhaustive-deps
@@ -51,14 +50,15 @@ export const ComposeWindow = () => {
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSend = () => {
-    if ([...parseTokens(to), ...parseTokens(cc), ...parseTokens(bcc)].length === 0) {
+    const data = latest.current;
+    if ([...splitList(data.to), ...splitList(data.cc), ...splitList(data.bcc)].length === 0) {
       setError('Please specify at least one recipient');   // never fail silently (guardrail Q20)
       return;
     }
     setError(null);
     if (autosave.current) clearTimeout(autosave.current);
     settled.current = true;
-    if (!sendEmail.isPending) sendEmail.mutate({ draftId, to, cc, bcc, subject, body });
+    if (!sendEmail.isPending) sendEmail.mutate(data);
     ui.setComposeData(null);
     ui.showToast('Message sent');
   };
@@ -66,8 +66,9 @@ export const ComposeWindow = () => {
   const handleClose = () => {
     if (autosave.current) clearTimeout(autosave.current);
     settled.current = true;
-    if (subject || body) {
-      saveDraft.mutate({ draftId, to, cc, bcc, subject, body });
+    const data = latest.current;
+    if (data.subject || data.body) {
+      saveDraft.mutate(data);
       ui.showToast('Draft saved');
     }
     ui.setComposeData(null);   // empty compose → nothing written (§0.6)

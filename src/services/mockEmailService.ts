@@ -1,11 +1,11 @@
 import { MOCK_EMAILS } from '../data/mockEmails';
-import type { Email, ComposeData } from '../types/email';
+import { PERMANENT_DELETE_CONTAINERS, type Email, type ComposeData } from '../types/email';
+import { splitList } from '../utils/splitList';
 
 let store: Email[] = structuredClone(MOCK_EMAILS);
 const delay = (ms = 80) => new Promise<void>(r => setTimeout(r, ms));
-const mutate = (fn: () => void): Email[] => { fn(); return [...store]; };
+const mutate = (fn: () => void): void => { fn(); };
 const find = (id: string) => store.find(e => e.id === id);
-const splitList = (s: string) => s.split(',').map(t => t.trim()).filter(Boolean);
 
 // Total operations: every guard is a silent return (guardrail #18). Nothing throws.
 export const emailService = {
@@ -111,6 +111,19 @@ export const emailService = {
   permanentDelete: async (ids: string[]): Promise<void> => {
     await delay();
     mutate(() => { store = store.filter(e => !ids.includes(e.id)); });
+  },
+
+  // One route for every Delete button (guardrail #15 / Q9 / Q14), partitioned
+  // here where the store lives — callers never reach into query data (0.3)
+  deleteRoute: async (ids: string[]): Promise<void> => {
+    const permanent: string[] = [];
+    const soft: string[] = [];
+    for (const id of ids) {
+      const c = find(id)?.container;
+      (c !== null && c !== undefined && PERMANENT_DELETE_CONTAINERS.has(c) ? permanent : soft).push(id);
+    }
+    if (permanent.length) await emailService.permanentDelete(permanent);
+    if (soft.length) await emailService.moveToTrash(soft);
   },
 
   // only INBOX → SPAM; everything else no-op (no spam for sent/draft/archived)

@@ -1,6 +1,6 @@
 import { useEmails, selectUnreadCount } from '../../hooks/useEmails';
 import { useUI } from '../../store/UIStoreContext';
-import type { SidebarView } from '../../types/email';
+import { EMPTY_COMPOSE, type SidebarView } from '../../types/email';
 import { Badge } from '../ui/Badge';
 
 type Item = { view: SidebarView; label: string; icon: string };
@@ -30,7 +30,7 @@ export const Sidebar = () => {
       <button
         type="button"
         className="sidebar__compose"
-        onClick={() => ui.setComposeData({ to: '', cc: '', bcc: '', subject: '', body: '' })}
+        onClick={() => ui.setComposeData({ ...EMPTY_COMPOSE })}
       >
         <span aria-hidden="true">✎</span>
         Compose

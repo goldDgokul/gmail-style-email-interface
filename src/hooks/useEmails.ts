@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { emailService } from '../services/mockEmailService';
+import { snoozedIntoFuture } from '../utils/snooze';
 import type { Email, SidebarView } from '../types/email';
 
 export const EMAIL_QK = ['emails'] as const;
@@ -9,9 +10,6 @@ export const useEmails = () =>
 
 // ── Derivations ──────────────────────────────────────────────────────────────
 const visible = (e: Email) => e.container !== 'TRASH' && e.container !== 'SPAM';
-
-const snoozedIntoFuture = (e: Email) =>
-  e.snoozedUntil !== null && new Date(e.snoozedUntil).getTime() > Date.now();
 
 export const selectForView = (
   emails: Email[],

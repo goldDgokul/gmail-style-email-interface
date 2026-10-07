@@ -7,7 +7,7 @@ import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { PERMANENT_DELETE_CONTAINERS, type Email } from '../../types/email';
 import { IconButton } from '../ui/IconButton';
 
-export const EmailToolbar = ({ visibleIds }: { visibleIds: string[] }) => {
+export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; emails: Email[] }) => {
   const ui = useUI();
   const qc = useQueryClient();
 
@@ -21,23 +21,23 @@ export const EmailToolbar = ({ visibleIds }: { visibleIds: string[] }) => {
   const [moveMenu, setMoveMenu] = useState(false);
   const [moreMenu, setMoreMenu] = useState(false);
 
-  const emails = qc.getQueryData<Email[]>(EMAIL_QK) ?? [];
   const emailById = (id: string) => emails.find(e => e.id === id);
 
   // Guardrail #20: act only on selected ∩ visible — never raw selectedIds
-  const safeIds = [...ui.selectedIds].filter(id => visibleIds.includes(id));
-  const selected = safeIds.map(emailById).filter((e): e is Email => !!e);
+  const targetIds = [...ui.selectedIds].filter(id => visibleIds.includes(id));
+  const selected = targetIds.map(emailById).filter((e): e is Email => !!e);
   const allPermanent = selected.length > 0 && selected.every(
     e => e.container !== null && PERMANENT_DELETE_CONTAINERS.has(e.container),
   );
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id => ui.selectedIds.has(id));
 
   const pending = archive.isPending || moveToSpam.isPending || routeDelete.isPending
     || markRead.isPending || restore.isPending;
-  const hasSelection = safeIds.length > 0;
+  const hasSelection = targetIds.length > 0;
 
   const handleDelete = () => {
-    if (!safeIds.length) return;
-    routeDelete.mutate(safeIds);   // partition happens inside the route
+    if (!targetIds.length) return;
+    routeDelete.mutate(targetIds);   // partition happens inside the route
     ui.clearSelection();
   };
 
@@ -74,15 +74,15 @@ export const EmailToolbar = ({ visibleIds }: { visibleIds: string[] }) => {
   return (
     <div className="toolbar" role="toolbar" aria-label="Bulk actions">
       <IconButton
-        label="Clear selection"
-        onClick={() => ui.clearSelection()}
+        label={allSelected ? 'Clear selection' : 'Select all'}
+        onClick={() => (allSelected ? ui.clearSelection() : ui.selectAll(visibleIds))}
       >
         ☐
       </IconButton>
       <span className="toolbar__spacer" />
 
-      <IconButton label="Archive" disabled={pending} onClick={() => { archive.mutate(safeIds); ui.clearSelection(); }}>📥</IconButton>
-      <IconButton label="Report spam" disabled={pending} onClick={() => { moveToSpam.mutate(safeIds); ui.clearSelection(); }}>⚠️</IconButton>
+      <IconButton label="Archive" disabled={pending} onClick={() => { archive.mutate(targetIds); ui.clearSelection(); }}>📥</IconButton>
+      <IconButton label="Report spam" disabled={pending} onClick={() => { moveToSpam.mutate(targetIds); ui.clearSelection(); }}>⚠️</IconButton>
       <IconButton label={allPermanent ? 'Delete forever' : 'Delete'} danger disabled={pending} onClick={handleDelete}>🗑</IconButton>
 
       <span className="menu-wrap">
@@ -90,11 +90,11 @@ export const EmailToolbar = ({ visibleIds }: { visibleIds: string[] }) => {
         {markMenu && (
           <span className="menu" style={{ top: 44, right: 0 }}>
             <button type="button" className="menu__item" disabled={markRead.isPending}
-              onClick={() => { markRead.mutate({ ids: safeIds, unread: false }); ui.clearSelection(); setMarkMenu(false); }}>
+              onClick={() => { markRead.mutate({ ids: targetIds, unread: false }); ui.clearSelection(); setMarkMenu(false); }}>
               Mark as read
             </button>
             <button type="button" className="menu__item" disabled={markRead.isPending}
-              onClick={() => { markRead.mutate({ ids: safeIds, unread: true }); ui.clearSelection(); setMarkMenu(false); }}>
+              onClick={() => { markRead.mutate({ ids: targetIds, unread: true }); ui.clearSelection(); setMarkMenu(false); }}>
               Mark as unread
             </button>
           </span>
@@ -106,15 +106,15 @@ export const EmailToolbar = ({ visibleIds }: { visibleIds: string[] }) => {
         {moveMenu && (
           <span className="menu" style={{ top: 44, right: 0 }}>
             <button type="button" className="menu__item" disabled={restore.isPending}
-              onClick={() => { restore.mutate(safeIds); ui.clearSelection(); setMoveMenu(false); }}>
+              onClick={() => { restore.mutate(targetIds); ui.clearSelection(); setMoveMenu(false); }}>
               📥 Inbox
             </button>
             <button type="button" className="menu__item" disabled={moveToSpam.isPending}
-              onClick={() => { moveToSpam.mutate(safeIds); ui.clearSelection(); setMoveMenu(false); }}>
+              onClick={() => { moveToSpam.mutate(targetIds); ui.clearSelection(); setMoveMenu(false); }}>
               ⚠️ Spam
             </button>
             <button type="button" className="menu__item menu__item--danger" disabled={routeDelete.isPending}
-              onClick={() => { routeDelete.mutate(safeIds); ui.clearSelection(); setMoveMenu(false); }}>
+              onClick={() => { routeDelete.mutate(targetIds); ui.clearSelection(); setMoveMenu(false); }}>
               🗑 Trash
             </button>
           </span>

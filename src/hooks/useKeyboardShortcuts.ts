@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { UIStore } from '../store/useUIStore';
+import { EMPTY_COMPOSE } from '../types/email';
 
 const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 const isTyping = () => {
@@ -24,7 +25,7 @@ export const useKeyboardShortcuts = (
       const open = ui.openEmailId;
       switch (e.key) {
         case 'c':
-          ui.setComposeData({ to:'', cc:'', bcc:'', subject:'', body:'' }); break;
+          ui.setComposeData({ ...EMPTY_COMPOSE }); break;
         case '/':
           e.preventDefault(); document.getElementById('search-input')?.focus(); break;
         case 'Escape':
