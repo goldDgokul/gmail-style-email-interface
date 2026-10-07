@@ -18,6 +18,7 @@ export const ComposeWindow = () => {
   const [body, setBody] = useState(compose.body);
   const [showCcBcc, setShowCcBcc] = useState(Boolean(compose.cc || compose.bcc));
   const [error, setError] = useState<string | null>(null);
+  const [full, setFull] = useState(false);
 
   const autosave = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendEmail = useSendEmail();
@@ -83,11 +84,12 @@ export const ComposeWindow = () => {
   };
 
   return (
-    <section className="compose" aria-label="New message">
+    <section className="compose" data-fullscreen={full || undefined} aria-label="New message">
       <div className="compose__header">
         <span>{compose.replyToId ? 'Reply' : 'New Message'}</span>
         <span>
           <IconButton label="Minimize compose">─</IconButton>
+          <IconButton label="Full screen compose" aria-pressed={full} onClick={() => setFull(v => !v)}>⤢</IconButton>
           <IconButton label="Close compose" onClick={handleClose}>✕</IconButton>
         </span>
       </div>
@@ -145,7 +147,8 @@ export const ComposeWindow = () => {
           disabled={sendEmail.isPending}
           onClick={handleSend}
         >
-          Send ▾
+          <span className="compose__send-label">Send</span>
+          <span className="compose__send-caret" aria-hidden="true">▾</span>
         </button>
         <IconButton label="Attach files">📎</IconButton>
         <IconButton label="Formatting options">A</IconButton>

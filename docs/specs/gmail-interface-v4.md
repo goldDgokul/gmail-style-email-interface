@@ -690,7 +690,7 @@ Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-
 - Carries a `// No threading — each Email is independent (§0.7)` comment (`EmailList.tsx` carries it too).
 
 ### `EmailToolbar.tsx`
-**No selection:** `[↺ Refresh] [⋯ More]` (More menu: `☐ Select all`, `✔ Mark all as read`). **With selection:** `[☐ select all] [Archive] [Spam] [Delete] [Mark read ▾] [Move to ▾]`.
+**No selection:** `[☐ Select all] [▾] [↺ Refresh] [⋯ More]` plus a right-aligned count `1–N of N`. The leading ☐ selects all visible even at idle; the ▾ (selection options) and `⋯` menus both offer `☐ Select all`, `✔ Mark all as read`. **With selection:** `[☐ select all] [Archive] [Spam] [Delete] [Mark read ▾] [Move to ▾]`.
 The leading `☐` **selects all visible**; once every visible row is selected it becomes `Clear selection` (toggles). The toolbar receives `emails` as a prop — it never reads query data itself (Refresh is the only `queryClient` use).
 
 **No `Labels ▾` button.** User labels are seed-data filter chips with no tagging/CRUD UI in v1 (Q2, `GLOSSARY.md` "User Label") — a toolbar control that cannot act on a label would be dead UI. The service exposes no label-mutation operation; row/view label chips only open the `'label'` pseudo-view.
@@ -916,7 +916,7 @@ Each step must compile before the next begins.
 | `setTimeout` without cleanup | Always return `clearTimeout` |
 | Shortcuts firing inside inputs | `isTyping()` guard |
 | Hardcoded colors / durations in components | `var(--c-*)` / `var(--dur)` |
-| Compose `width: 520px` at 768px | Full-width bottom-sheet |
+| Compose `width: 600px` at 768px | Full-width bottom-sheet |
 | Row-internal clicks opening the email | `e.stopPropagation()` |
 | Any `any` | Proper types or `unknown` + narrowing |
 | Silent send failure | Inline recipient error |

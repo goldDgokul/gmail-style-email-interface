@@ -1,7 +1,6 @@
 import { useEmails, selectUnreadCount } from '../../hooks/useEmails';
 import { useUI } from '../../store/UIStoreContext';
 import { EMPTY_COMPOSE, type SidebarView } from '../../types/email';
-import { Badge } from '../ui/Badge';
 
 type Item = { view: SidebarView; label: string; icon: string };
 
@@ -39,17 +38,20 @@ export const Sidebar = () => {
       <nav className="sidebar__nav" aria-label="Views">
         {ITEMS.map(item => {
           const active = ui.view === item.view;
+          const count = item.view === 'inbox' ? inboxCount : 0;
           return (
             <button
               key={item.view}
               type="button"
-              className="nav-item"
+              className={count > 0 ? 'nav-item nav-item--strong' : 'nav-item'}
               aria-current={active ? 'page' : undefined}
               onClick={() => ui.changeView(item.view)}
             >
               <span className="nav-item__icon" aria-hidden="true">{item.icon}</span>
               <span className="nav-item__label">{item.label}</span>
-              {item.view === 'inbox' && <Badge count={inboxCount} />}
+              {count > 0 && (
+                <span className="nav-item__count">{count.toLocaleString('en-US')}</span>
+              )}
             </button>
           );
         })}
@@ -59,17 +61,20 @@ export const Sidebar = () => {
             <div className="sidebar__divider"><span>── Labels ──</span></div>
             {labels.map(name => {
               const active = ui.view === 'label' && ui.activeLabel === name;
+              const count = selectUnreadCount(emails, 'label', name);
               return (
                 <button
                   key={name}
                   type="button"
-                  className="nav-item"
+                  className={count > 0 ? 'nav-item nav-item--strong' : 'nav-item'}
                   aria-current={active ? 'page' : undefined}
                   onClick={() => ui.changeLabel(name)}
                 >
                   <span className="nav-item__icon" aria-hidden="true">🏷</span>
                   <span className="nav-item__label">{name}</span>
-                  <Badge count={selectUnreadCount(emails, 'label', name)} />
+                  {count > 0 && (
+                    <span className="nav-item__count">{count.toLocaleString('en-US')}</span>
+                  )}
                 </button>
               );
             })}

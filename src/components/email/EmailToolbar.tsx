@@ -20,6 +20,7 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
   const [markMenu, setMarkMenu] = useState(false);
   const [moveMenu, setMoveMenu] = useState(false);
   const [moreMenu, setMoreMenu] = useState(false);
+  const [selMenu, setSelMenu] = useState(false);
 
   const emailById = (id: string) => emails.find(e => e.id === id);
 
@@ -44,6 +45,42 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
   if (!hasSelection) {
     return (
       <div className="toolbar">
+        <IconButton
+          label="Select all"
+          disabled={visibleIds.length === 0}
+          onClick={() => ui.selectAll(visibleIds)}
+        >
+          ☐
+        </IconButton>
+        <span className="menu-wrap">
+          <IconButton
+            label="Selection options"
+            aria-expanded={selMenu}
+            disabled={visibleIds.length === 0}
+            onClick={() => setSelMenu(v => !v)}
+          >
+            ▾
+          </IconButton>
+          {selMenu && (
+            <span className="menu" style={{ top: 44, left: 0 }}>
+              <button
+                type="button"
+                className="menu__item"
+                onClick={() => { ui.selectAll(visibleIds); setSelMenu(false); }}
+              >
+                ☐ Select all
+              </button>
+              <button
+                type="button"
+                className="menu__item"
+                disabled={markRead.isPending}
+                onClick={() => { markRead.mutate({ ids: visibleIds, unread: false }); setSelMenu(false); }}
+              >
+                ✔ Mark all as read
+              </button>
+            </span>
+          )}
+        </span>
         <IconButton label="Refresh" onClick={() => qc.invalidateQueries({ queryKey: EMAIL_QK })}>↺</IconButton>
         <span className="menu-wrap">
           <IconButton label="More actions" onClick={() => setMoreMenu(v => !v)} aria-expanded={moreMenu}>⋯</IconButton>
@@ -67,6 +104,12 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
             </span>
           )}
         </span>
+        <span className="toolbar__spacer" />
+        {visibleIds.length > 0 && (
+          <span className="toolbar__count">
+            {`1–${visibleIds.length} of ${visibleIds.length.toLocaleString('en-US')}`}
+          </span>
+        )}
       </div>
     );
   }
