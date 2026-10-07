@@ -152,6 +152,7 @@ input, textarea {
   overflow: hidden;
   background: var(--c-surface);
   border-top-left-radius: var(--r-lg);
+  border-top-right-radius: var(--r-lg);
 }
 
 /* ============================================================
