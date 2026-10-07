@@ -1,5 +1,7 @@
 # Gmail-Style Email Interface — Agent Build Plan (v3 — Final)
 
+> **Superseded by [gmail-interface-v4.md](./gmail-interface-v4.md).** Kept for history only — v4 folds the 21 decisions from the grilling session (container/flag split, container-keyed delete routing, compose identity, selection intersection) and reflects `GLOSSARY.md` + ADR-0001/0002. Do not build from this file.
+
 > **Stack**: React 19.3 · TypeScript 5.4+ · TanStack Query v5 · Vite · Vanilla CSS
 > **Constraint**: 100% frontend. No backend. No auth. No external API. All data is in-memory mock.
 > **Code density**: If something can be done in 10 lines, do NOT write 100.
