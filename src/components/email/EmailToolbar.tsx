@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { EMAIL_QK } from '../../hooks/useEmails';
 import { useUI } from '../../store/UIStoreContext';
@@ -7,6 +7,35 @@ import { useDeleteRoute } from '../../hooks/useDeleteRoute';
 import { PERMANENT_DELETE_CONTAINERS, type Email } from '../../types/email';
 import { IconButton } from '../ui/IconButton';
 import { Icon } from '../ui/Icon';
+
+// The two idle-toolbar menus (selection caret + ⋯) hold the same items — one source.
+const ListMenu = ({
+  style,
+  disabled,
+  close,
+  onSelectAll,
+  onMarkAllRead,
+}: {
+  style: CSSProperties;
+  disabled: boolean;
+  close: () => void;
+  onSelectAll: () => void;
+  onMarkAllRead: () => void;
+}) => (
+  <span className="menu" style={style}>
+    <button type="button" className="menu__item" onClick={() => { onSelectAll(); close(); }}>
+      Select all
+    </button>
+    <button
+      type="button"
+      className="menu__item"
+      disabled={disabled}
+      onClick={() => { onMarkAllRead(); close(); }}
+    >
+      Mark all as read
+    </button>
+  </span>
+);
 
 export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; emails: Email[] }) => {
   const ui = useUI();
@@ -63,46 +92,26 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
             <Icon name="caret-down" />
           </IconButton>
           {selMenu && (
-            <span className="menu" style={{ top: 44, left: 0 }}>
-              <button
-                type="button"
-                className="menu__item"
-                onClick={() => { ui.selectAll(visibleIds); setSelMenu(false); }}
-              >
-                Select all
-              </button>
-              <button
-                type="button"
-                className="menu__item"
-                disabled={markRead.isPending}
-                onClick={() => { markRead.mutate({ ids: visibleIds, unread: false }); setSelMenu(false); }}
-              >
-                Mark all as read
-              </button>
-            </span>
+            <ListMenu
+              style={{ left: 0 }}
+              disabled={markRead.isPending}
+              close={() => setSelMenu(false)}
+              onSelectAll={() => ui.selectAll(visibleIds)}
+              onMarkAllRead={() => markRead.mutate({ ids: visibleIds, unread: false })}
+            />
           )}
         </span>
         <IconButton label="Refresh" onClick={() => qc.invalidateQueries({ queryKey: EMAIL_QK })}><Icon name="refresh" /></IconButton>
         <span className="menu-wrap">
           <IconButton label="More actions" onClick={() => setMoreMenu(v => !v)} aria-expanded={moreMenu}><Icon name="more" /></IconButton>
           {moreMenu && (
-            <span className="menu" style={{ top: 44, left: 12 }}>
-              <button
-                type="button"
-                className="menu__item"
-                onClick={() => { ui.selectAll(visibleIds); setMoreMenu(false); }}
-              >
-                Select all
-              </button>
-              <button
-                type="button"
-                className="menu__item"
-                disabled={markRead.isPending}
-                onClick={() => { markRead.mutate({ ids: visibleIds, unread: false }); setMoreMenu(false); }}
-              >
-                Mark all as read
-              </button>
-            </span>
+            <ListMenu
+              style={{ left: 12 }}
+              disabled={markRead.isPending}
+              close={() => setMoreMenu(false)}
+              onSelectAll={() => ui.selectAll(visibleIds)}
+              onMarkAllRead={() => markRead.mutate({ ids: visibleIds, unread: false })}
+            />
           )}
         </span>
         <span className="toolbar__spacer" />
@@ -130,9 +139,9 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
       <IconButton label={allPermanent ? 'Delete forever' : 'Delete'} danger disabled={pending} onClick={handleDelete}><Icon name="trash" /></IconButton>
 
       <span className="menu-wrap">
-        <IconButton label="Mark read" disabled={pending} aria-expanded={markMenu} onClick={() => setMarkMenu(v => !v)}><Icon name="mail" /></IconButton>
+        <IconButton label="Mark read" disabled={pending} aria-expanded={markMenu} onClick={() => setMarkMenu(v => !v)}><Icon name="envelope" /></IconButton>
         {markMenu && (
-          <span className="menu" style={{ top: 44, right: 0 }}>
+          <span className="menu" style={{ right: 0 }}>
             <button type="button" className="menu__item" disabled={markRead.isPending}
               onClick={() => { markRead.mutate({ ids: targetIds, unread: false }); ui.clearSelection(); setMarkMenu(false); }}>
               Mark as read
@@ -146,9 +155,9 @@ export const EmailToolbar = ({ visibleIds, emails }: { visibleIds: string[]; ema
       </span>
 
       <span className="menu-wrap">
-        <IconButton label="Move to" disabled={pending} aria-expanded={moveMenu} onClick={() => setMoveMenu(v => !v)}><Icon name="folder" /></IconButton>
+        <IconButton label="Move to" disabled={pending} aria-expanded={moveMenu} onClick={() => setMoveMenu(v => !v)}><Icon name="drawer" /></IconButton>
         {moveMenu && (
-          <span className="menu" style={{ top: 44, right: 0 }}>
+          <span className="menu" style={{ right: 0 }}>
             <button type="button" className="menu__item" disabled={restore.isPending}
               onClick={() => { restore.mutate(targetIds); ui.clearSelection(); setMoveMenu(false); }}>
               Inbox

@@ -19,7 +19,8 @@ export const ComposeWindow = () => {
   const [body, setBody] = useState(compose.body);
   const [showCcBcc, setShowCcBcc] = useState(Boolean(compose.cc || compose.bcc));
   const [error, setError] = useState<string | null>(null);
-  const [full, setFull] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const autosave = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendEmail = useSendEmail();
@@ -84,13 +85,34 @@ export const ComposeWindow = () => {
     ui.setComposeData(null);
   };
 
+  // Fullscreen and minimized are mutually exclusive: a minimized window is only its header
+  const toggleFullscreen = () => {
+    const next = !isFullscreen;
+    setIsFullscreen(next);
+    if (next) setIsMinimized(false);
+  };
+
   return (
-    <section className="compose" data-fullscreen={full || undefined} aria-label="New message">
+    <section
+      className="compose"
+      data-fullscreen={isFullscreen || undefined}
+      data-minimized={isMinimized || undefined}
+      aria-label="New message"
+    >
       <div className="compose__header">
         <span>{compose.replyToId ? 'Reply' : 'New Message'}</span>
         <span>
-          <IconButton label="Minimize compose">─</IconButton>
-          <IconButton label="Full screen compose" aria-pressed={full} onClick={() => setFull(v => !v)}><Icon name="maximize" /></IconButton>
+          <IconButton
+            label={isMinimized ? 'Restore compose' : 'Minimize compose'}
+            aria-pressed={isMinimized}
+            onClick={() => {
+              setIsMinimized(v => !v);
+              setIsFullscreen(false);
+            }}
+          >
+            ─
+          </IconButton>
+          <IconButton label="Full screen compose" aria-pressed={isFullscreen} onClick={toggleFullscreen}><Icon name="maximize" /></IconButton>
           <IconButton label="Close compose" onClick={handleClose}><Icon name="close" /></IconButton>
         </span>
       </div>

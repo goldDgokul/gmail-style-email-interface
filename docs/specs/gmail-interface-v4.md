@@ -162,7 +162,7 @@ src/
     ├── layout/   AppShell.tsx  TopBar.tsx  Sidebar.tsx
     ├── email/    EmailList.tsx EmailRow.tsx EmailToolbar.tsx EmailView.tsx
     ├── compose/  ComposeWindow.tsx
-    └── ui/       Avatar.tsx Badge.tsx Icon.tsx IconButton.tsx LabelChip.tsx
+    └── ui/       Avatar.tsx Icon.tsx IconButton.tsx LabelChip.tsx
                   Spinner.tsx EmptyState.tsx Toast.tsx
 ```
 
@@ -650,7 +650,7 @@ export const useKeyboardShortcuts = (
 
 ## 9. Design System (`src/index.css`)
 
-Unchanged from v3: full token system (colors, typography, layout, elevation, spacing, radii) with `--dur: 140ms` and `@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms } }`, `body { height: 100dvh; overflow: hidden }`. Fonts: `--font-sans: "Google Sans", "Roboto", system-ui, …` — the Google Fonts `@import` is deliberately omitted (offline-safe build; Google Sans/Roboto resolve when installed locally, otherwise `system-ui`). Token deviation from v3: `--c-bg: #f8fafd` — measured from Gmail reference screenshots (v3's `#f6f8fc` was an estimate; Gmail's top bar, sidebar, and right gutter all render `#f8fafd`). New tokens: `--rail-w: 56px` (right apps-rail gutter), `--c-scroll-thumb: #cccccc`, `--c-scroll-thumb-hover: #9aa0a6`.
+Unchanged from v3: full token system (colors, typography, layout, elevation, spacing, radii) with `--dur: 140ms` and `@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms } }`, `body { height: 100dvh; overflow: hidden }`. Fonts: `--font-sans: "Google Sans", "Roboto", system-ui, …` — the Google Fonts `@import` is deliberately omitted (offline-safe build; Google Sans/Roboto resolve when installed locally, otherwise `system-ui`). Token deviation from v3: `--c-bg: #f8fafd` — measured from Gmail reference screenshots (v3's `#f6f8fc` was an estimate; Gmail's top bar, sidebar, and right gutter all render `#f8fafd`). Tokens the parity work leaned on (the authoritative set is `src/index.css`; every one is consumed through `var()` — the guardrail bans literals in *components*, not tokens in the token block): `--c-nav-active: #001d35` (active sidebar item text — Gmail's near-black navy, not the primary blue), `--c-row-hover: #f2f6fc`, `--c-compose-btn: #c2e7ff` (compose button fill), `--c-text-btn: #444746` (outline/ghost button text), `--c-search-border: #dadce0`, `--fs-input: 16px` (search field — iOS zoom guard), `--sh-elev-24` (compose shadow), `--sh-compose-hover` (compose button shadow), `--c-compose-hd`, `--c-toast-bg`, `--c-send-divider`, `--rail-w: 56px` (right apps-rail gutter), `--row-h: 40px`, `--compose-w: 600px`, `--c-scroll-thumb: #cccccc`, `--c-scroll-thumb-hover: #9aa0a6`.
 
 ---
 
@@ -666,21 +666,22 @@ Unchanged from v3: full token system (colors, typography, layout, elevation, spa
 Grid shell only: TopBar (`grid-column: 1 / -1`), Sidebar (col 1), main = `EmailList` or `EmailView` (col 2) — then an **empty right rail gutter** (col 3, `--rail-w: 56px`, painted by `body { background: var(--c-bg) }`) that reserves Gmail's apps-rail space so the white card closes 56px short of the window edge (the rail's *icons* stay out of scope — see accepted deviations); `@media (max-width: 768px) { :root { --rail-w: 0px } }`. The card carries a 16px radius on **both** top corners — Gmail's top-right is rounded too (re-measured: r≈12, with the scrollbar clipped *inside* the rounded card); we use `--r-lg` on both sides for symmetry. The list scrollbar (when content overflows) is Gmail-style: `::-webkit-scrollbar { width: 12px }`, transparent track, thumb `--c-scroll-thumb` (`#cccccc`), hover `--c-scroll-thumb-hover` (`#9aa0a6`). `ComposeWindow` and `Toast` are `position: fixed`.
 
 ### `TopBar.tsx`
-`[☰] Gmail [search id="search-input"] [?] [⚙] [avatar]` — sticky, `grid-column: 1 / -1`, `z-index: 200`.
+`[☰] [Gmail logo] Gmail [search id="search-input"] [?] [⚙] [avatar]` — sticky, `grid-column: 1 / -1`, `z-index: 200`.
+The logo is an inline, hand-drawn SVG mark (`viewBox="52 42 88 66"`, five `<path>`s) painted with Gmail's brand hexes `#4285f4`, `#34a853`, `#fbbc04`, `#ea4335`, `#c5221f`. These five literals are the **only** hardcoded colours in components, and they are exempt from guardrail "no hardcoded colors" (§14): they are the *subject* of the parity project, and re-expressing brand assets as design tokens would fight the guardrail's intent (structure, not paint-by-hex).
 Search is debounced 200ms with cleanup, and a non-empty search **sets `search` in UIStore directly** (search abandons the current View the way `changeView` does — it is not an overlay on it). Clear `×` button inside the input when non-empty.
 
 ### `Sidebar.tsx`
-Flex column: compose button (`flex-shrink: 0`, top of column — *not* sticky) then a `flex: 1; overflow-y: auto` nav. Active item: `background: var(--c-selected); color: var(--c-primary)`.
+Flex column: compose button (`flex-shrink: 0`, top of column — *not* sticky) then a `flex: 1; overflow-y: auto` nav. Active item (`[aria-current='page']`): `background: var(--c-selected); color: var(--c-nav-active); font-weight: 700` — Gmail's active pill paints near-black navy text (`#041e49` measured on `#d3e3fd`), **not** the primary blue; items holding an unread count are bold regardless (`.nav-item--strong`).
 
 Items: Inbox, Starred, Important, Snoozed, Sent, Drafts, Spam, Trash, All Mail — then a plain `Labels` section header (no `+`/menu affordance — guardrail #13 makes a create-label control dead UI) with `changeLabel(name)` chips.
-Unread pill: **rendered only for Inbox and user-label items** (guardrail #14), value from `selectUnreadCount(emails, view, activeLabel)`. Inbox uses `'inbox'` + `null`; a label uses `'label'` + its name.
+Unread count: **rendered only for Inbox and user-label items** (guardrail #14), value from `selectUnreadCount(emails, view, activeLabel)`, rendered as plain trailing text in `.nav-item__count` (inherits the row's colour and weight — there is no pill/badge component; `ui/Badge.tsx` was removed as dead code). Inbox uses `'inbox'` + `null`; a label uses `'label'` + its name.
 Compose button → `setComposeData({ ...EMPTY_COMPOSE })`.
 
 ### `EmailList.tsx`
 `<EmailToolbar>` + scrollable list of `<EmailRow>` + `<EmptyState>` when empty + `<Spinner>` when loading. Emits `visibleIds` (the rendered ids, in order) to `App.tsx` for keyboard navigation and the selection intersection.
 
 ### `EmailRow.tsx`
-Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-1] [Date/actions 92px]`, row height `var(--row-h)`, row padding `8px 12px` (checkbox sits 19px from the card edge — Gmail-measured).
+Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-1] [Date/actions 92px]`, row height `var(--row-h)`, row padding written as **`padding-left: 8px; padding-right: 12px` with no vertical padding** (height is fixed and contents are centred) — the 8px column inset is what puts the checkbox ~19px from the card edge: Gmail renders its first checkbox pixel at x=275 against a card starting at x=256, and so do we. Beware the shorthand reading: "`8px 12px`" parses as top/bottom 8, left/right 12, which would push the grid 4px right; spell the sides out.
 `@media (max-width: 768px)`: hide star/flag **and `.row__meta` (date/actions)** — grid becomes `40px 120px 1fr`, i.e. exactly `[checkbox · sender · subject]`; **subject always present**.
 
 - Row click / Enter / Space → **drafts**: `setComposeData(draftComposeData(email))` (§0.6 re-edit); **everything else**: `setOpenEmailId(id)` **only** — no mark-read here (guardrail #19).
@@ -692,6 +693,7 @@ Columns: `[☐ 40px] [★ 32px] [▶ 24px] [Sender 160px] [Subject+preview flex-
 ### `EmailToolbar.tsx`
 **No selection:** `[☐ Select all] [▾] [↺ Refresh] [⋯ More]` plus a right-aligned count `1–N of N`. The leading ☐ selects all visible even at idle; the ▾ (selection options) and `⋯` menus both offer `☐ Select all`, `✔ Mark all as read`. **With selection:** `[☐ select all] [Archive] [Spam] [Delete] [Mark read ▾] [Move to ▾]`.
 The leading `☐` **selects all visible**; once every visible row is selected it becomes `Clear selection` (toggles). The toolbar receives `emails` as a prop — it never reads query data itself (Refresh is the only `queryClient` use).
+The idle `▾` and `⋯` menus render from one shared module-level `ListMenu` (same items; only the anchor offset and close handler differ) — the duplicate pair of button blocks it replaces was the review smell. Menus anchor off `.menu` (`position: absolute; top: 44px`) inside their `.menu-wrap`; `EmailRow`'s snooze menu is the one exception — `position: fixed` with a viewport `top` computed from the clicked button, so it is never clipped by the list's scroll container.
 
 **No `Labels ▾` button.** User labels are seed-data filter chips with no tagging/CRUD UI in v1 (Q2, `GLOSSARY.md` "User Label") — a toolbar control that cannot act on a label would be dead UI. The service exposes no label-mutation operation; row/view label chips only open the `'label'` pseudo-view.
 
@@ -712,7 +714,8 @@ useEffect(() => {
 }, [email?.id]);   // 'u' is unaffected: it never changes openEmailId
 ```
 
-Body: `<h1>` subject → user-label chips → header row (avatar, sender, `senderEmail`, timestamp, expand caret) → `<pre style="white-space:pre-wrap">` body → attachments → `[↩ Reply] [↩↩ Reply all] [→ Forward]`.
+Body: `<h1>` subject → user-label chips → header row (avatar, sender, `senderEmail` → recipients, timestamp) → `<pre style="white-space:pre-wrap">` body → attachments → `[Reply] [Reply all] [Forward]`.
+The timestamp is `formatDateFull` → `Tue, Oct 6, 10:39 AM (1 day ago)` (weekday, month, day, time, then the relative parenthetical — measured from the Gmail reference). The three action buttons are **plain `.btn` text** — Gmail's bottom bar is text pills with no arrow glyphs, so the earlier `[↩ Reply] [↩↩ Reply all] [→ Forward]` sketch was wrong. There is no per-recipient expand caret: recipients render inline in the header line instead.
 
 Prefills (unchanged): Reply → `to: senderEmail`, `subject: Re: …`, quoted body; Reply all → recipients included; Forward → `Fwd: …`, empty `to`, forwarded-message header block.
 
@@ -721,7 +724,7 @@ Prefills (unchanged): Reply → `to: senderEmail`, `subject: Re: …`, quoted bo
 **Drafts:** a draft opened via j/k shows `[✎ Edit draft]` in place of Reply/Reply-all/Forward — it closes the view and opens ComposeWindow prefilled (`draftComposeData`). Reply/Forward never run against a draft (they would fabricate a second message).
 
 ### `ComposeWindow.tsx`
-`position: fixed; bottom: 0; right: 24px; width: var(--compose-w)`; `@media (max-width: 768px)` → full-width bottom-sheet. Header `--c-compose-hd` with minimize / fullscreen / close.
+`position: fixed; bottom: 0; right: 24px; width: var(--compose-w)`; `@media (max-width: 768px)` → full-width bottom-sheet. Header `--c-compose-hd` with **minimize / fullscreen / close**, all wired: minimize toggles `data-minimized` (and clears fullscreen), fullscreen toggles `data-fullscreen` (and clears minimized) — the two are mutually exclusive, so a minimized window is never `inset: 0`. Minimized collapses the window to its 40px header by hiding `.compose__fields`, `.compose__error`, `.compose__body` and `.compose__footer` and zeroing `min-height`; close runs `handleClose`. Minimize and restore are the same control (`aria-pressed`, label flips `Minimize compose` ↔ `Restore compose`) — the draft stays in component state the whole time, so restore never loses a keystroke.
 
 ```typescript
 const [draftId] = useState(() => composeData.draftId ?? crypto.randomUUID());  // §0.6 — id at open
@@ -768,7 +771,7 @@ Implementation notes (amendments to the snippet above):
 - Recipient validation reuses the shared `splitList` from `utils/splitList.ts`.
 
 ### `ui/` atoms
-`Avatar` (initials, deterministic pastel), `Badge`, `Icon` (monochrome 24px line glyphs, `currentColor`), `IconButton` (`aria-label` required), `LabelChip` (click → `changeLabel`, `stopPropagation`), `Spinner`, `Toast` (fixed bottom-left snackbar, 24px inset, `#202121`, radius 4, auto-dismiss), `EmptyState`.
+`Avatar` (initials, deterministic pastel), `Icon` (monochrome 24px line glyphs, `currentColor`), `IconButton` (`aria-label` required), `LabelChip` (click → `changeLabel`, `stopPropagation`), `Spinner`, `Toast` (fixed bottom-left snackbar, 24px inset, `#202121`, radius 4, auto-dismiss), `EmptyState`. Unread counts are plain `.nav-item__count` text — there is no badge/pill component.
 
 ### `EmptyState.tsx` — per-View copy, never hardcoded globally
 | View | Message |
@@ -875,6 +878,7 @@ Each step must compile before the next begins.
 - [ ] A draft row (click or Enter) opens ComposeWindow prefilled with `draftId`/subject/body/recipients — never EmailView; EmailView opened via `j`/`k` shows **Edit draft** instead of Reply
 - [ ] 🗑 discards without saving (any autosaved row is removed); a replaced compose (`c`/Reply while open) remounts fresh and saves its previous content
 - [ ] Zero recipients → inline error, window stays open; Cc-only send succeeds
+- [ ] Minimize collapses the window to its 40px header; restore brings fields, body and footer back with content intact
 - [ ] Reply/Reply-all/Forward prefill correctly
 
 **Keyboard & read state**
@@ -908,14 +912,14 @@ Each step must compile before the next begins.
 | Bulk action over raw `selectedIds` | `selected ∩ visibleIds`, then partition |
 | Clearing selection on search keystroke | Clear on `changeView` only |
 | Search scoped to the current View | Search is global (still excludes Trash/Spam) |
-| Badge counts recomputed from search results | `selectForView(view, '', activeLabel)` only |
-| Badge pill on Starred/All Mail | Inbox + user-label Views only |
+| Unread counts recomputed from search results | `selectForView(view, '', activeLabel)` only |
+| Unread count on Starred/All Mail | Inbox + user-label Views only |
 | Snooze moving containers / a wake-up job | `snoozedUntil` timestamp predicate (ADR-0002) |
 | Separate query keys per View | One `['emails']` |
 | `setSelectedIds(sameRef)` | `setSelectedIds(prev => new Set(prev))` |
 | `setTimeout` without cleanup | Always return `clearTimeout` |
 | Shortcuts firing inside inputs | `isTyping()` guard |
-| Hardcoded colors / durations in components | `var(--c-*)` / `var(--dur)` |
+| Hardcoded colors / durations in components | `var(--c-*)` / `var(--dur)` — sole exception: the Gmail brand-mark hexes in `TopBar.tsx` (§10) |
 | Compose `width: 600px` at 768px | Full-width bottom-sheet |
 | Row-internal clicks opening the email | `e.stopPropagation()` |
 | Any `any` | Proper types or `unknown` + narrowing |

@@ -10,7 +10,7 @@ const ICONS: Partial<Record<SidebarView, IconName>> = {
   drafts: 'file',
   sent: 'send',
   inbox: 'inbox',
-  all: 'folder',
+  all: 'drawer',
 };
 
 export const EmptyState = ({
@@ -42,7 +42,7 @@ export const EmptyState = ({
   return (
     <div className="empty">
       <div className="empty__icon" aria-hidden="true">
-        <Icon name={search ? 'search' : ICONS[view] ?? 'mail'} />
+        <Icon name={search ? 'search' : ICONS[view] ?? 'envelope'} />
       </div>
       <div>{message}</div>
     </div>

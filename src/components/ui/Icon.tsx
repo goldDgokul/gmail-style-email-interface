@@ -15,12 +15,12 @@ const GLYPHS = {
   file: (<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></>),
   spam: (<><path d="M12 4l9 16H3z" /><path d="M12 10v4" /><path d="M12 17h.01" /></>),
   trash: (<><path d="M4 7h16" /><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" /><path d="M10 11v6" /><path d="M14 11v6" /></>),
-  folder: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+  drawer: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
   tag: (<><path d="M20.6 13.4L12 4.8A2 2 0 0 0 10.6 4H5a1 1 0 0 0-1 1v5.6a2 2 0 0 0 .6 1.4l8.6 8.6a2 2 0 0 0 2.8 0l4.6-4.6a2 2 0 0 0 0-2.6z" /><circle cx="8" cy="8" r="1.3" /></>),
   edit: (<><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>),
   inbox: (<><path d="M3 12h5l1.5 2.5h5L16 12h5" /><path d="M5.6 5h12.8a2 2 0 0 1 1.9 1.3L22 12v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5l1.7-5.7A2 2 0 0 1 5.6 5z" /></>),
   archive: (<><rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /><path d="M12 10v4" /></>),
-  mail: (<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7.5l9 6 9-6" /></>),
+  envelope: (<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7.5l9 6 9-6" /></>),
   unread: (<><path d="M4 11.5L12 17l8-5.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" /><rect x="15" y="5" width="5.5" height="5.5" rx="1" fill="currentColor" stroke="none" /></>),
   back: (<><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></>),
   refresh: (<><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6" /><path d="M20.5 4.5V10H15" /></>),
@@ -30,7 +30,6 @@ const GLYPHS = {
   'caret-down': <path d="M7 10l5 5 5-5" />,
   attachment: <path d="M21.4 11.4l-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l8.5-8.5a3.7 3.7 0 0 1 5.2 5.2l-8.5 8.5a1.8 1.8 0 0 1-2.6-2.6l7.8-7.8" />,
   maximize: (<><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3l-7 7" /><path d="M3 21l7-7" /></>),
-  check: <path d="M5 13l4 4L19 7" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof GLYPHS;
@@ -38,17 +37,15 @@ export type IconName = keyof typeof GLYPHS;
 export const Icon = ({
   name,
   filled = false,
-  className = '',
 }: {
   name: IconName;
   filled?: boolean;
-  className?: string;
 }) => (
   <svg
     viewBox="0 0 24 24"
     aria-hidden="true"
     focusable="false"
-    className={['icon', filled ? 'icon--filled' : '', className].filter(Boolean).join(' ')}
+    className={['icon', filled ? 'icon--filled' : ''].filter(Boolean).join(' ')}
   >
     {GLYPHS[name]}
   </svg>

@@ -27,3 +27,5 @@ dev.log
 
 # Local reports (kept on disk, not in the repo)
 EOD_REPORT.txt
+MIDDAY_REPORT.txt
+GAP_REPORT.txt

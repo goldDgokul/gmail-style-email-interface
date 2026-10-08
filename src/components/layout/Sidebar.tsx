@@ -14,8 +14,35 @@ const ITEMS: Item[] = [
   { view: 'drafts',   label: 'Drafts',  icon: 'file' },
   { view: 'spam',     label: 'Spam',    icon: 'spam' },
   { view: 'trash',    label: 'Trash',   icon: 'trash' },
-  { view: 'all',      label: 'All Mail', icon: 'folder' },
+  { view: 'all',      label: 'All Mail', icon: 'drawer' },
 ];
+
+const NavItem = ({
+  icon,
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  icon: IconName;
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    className={count > 0 ? 'nav-item nav-item--strong' : 'nav-item'}
+    aria-current={active ? 'page' : undefined}
+    onClick={onClick}
+  >
+    <span className="nav-item__icon" aria-hidden="true"><Icon name={icon} /></span>
+    <span className="nav-item__label">{label}</span>
+    {count > 0 && (
+      <span className="nav-item__count">{count.toLocaleString('en-US')}</span>
+    )}
+  </button>
+);
 
 export const Sidebar = () => {
   const ui = useUI();
@@ -37,48 +64,30 @@ export const Sidebar = () => {
       </button>
 
       <nav className="sidebar__nav" aria-label="Views">
-        {ITEMS.map(item => {
-          const active = ui.view === item.view;
-          const count = item.view === 'inbox' ? inboxCount : 0;
-          return (
-            <button
-              key={item.view}
-              type="button"
-              className={count > 0 ? 'nav-item nav-item--strong' : 'nav-item'}
-              aria-current={active ? 'page' : undefined}
-              onClick={() => ui.changeView(item.view)}
-            >
-              <span className="nav-item__icon" aria-hidden="true"><Icon name={item.icon} /></span>
-              <span className="nav-item__label">{item.label}</span>
-              {count > 0 && (
-                <span className="nav-item__count">{count.toLocaleString('en-US')}</span>
-              )}
-            </button>
-          );
-        })}
+        {ITEMS.map(item => (
+          <NavItem
+            key={item.view}
+            icon={item.icon}
+            label={item.label}
+            count={item.view === 'inbox' ? inboxCount : 0}
+            active={ui.view === item.view}
+            onClick={() => ui.changeView(item.view)}
+          />
+        ))}
 
         {labels.length > 0 && (
           <>
             <div className="sidebar__divider"><span>Labels</span></div>
-            {labels.map(name => {
-              const active = ui.view === 'label' && ui.activeLabel === name;
-              const count = selectUnreadCount(emails, 'label', name);
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  className={count > 0 ? 'nav-item nav-item--strong' : 'nav-item'}
-                  aria-current={active ? 'page' : undefined}
-                  onClick={() => ui.changeLabel(name)}
-                >
-                  <span className="nav-item__icon" aria-hidden="true"><Icon name="tag" /></span>
-                  <span className="nav-item__label">{name}</span>
-                  {count > 0 && (
-                    <span className="nav-item__count">{count.toLocaleString('en-US')}</span>
-                  )}
-                </button>
-              );
-            })}
+            {labels.map(name => (
+              <NavItem
+                key={name}
+                icon="tag"
+                label={name}
+                count={selectUnreadCount(emails, 'label', name)}
+                active={ui.view === 'label' && ui.activeLabel === name}
+                onClick={() => ui.changeLabel(name)}
+              />
+            ))}
           </>
         )}
       </nav>

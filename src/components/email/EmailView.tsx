@@ -86,12 +86,12 @@ export const EmailView = ({ email }: { email: Email }) => {
           disabled={markRead.isPending}
           onClick={() => { markRead.mutate({ ids: [email.id], unread: true }); close(); }}
         >
-          <Icon name="mail" />
+          <Icon name="envelope" />
         </IconButton>
         <span className="menu-wrap">
           <IconButton label="Snooze" aria-expanded={snoozeMenu} disabled={pending} onClick={() => setSnoozeMenu(v => !v)}><Icon name="clock" /></IconButton>
           {snoozeMenu && (
-            <span className="menu" style={{ top: 44, left: 0 }}>
+            <span className="menu" style={{ left: 0 }}>
               {SNOOZE_MENU.map(p => (
                 <button
                   key={p.key}
