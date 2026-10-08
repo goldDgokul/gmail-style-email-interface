@@ -22,18 +22,22 @@ const NavItem = ({
   label,
   count,
   active,
+  collapsed = false,
   onClick,
 }: {
   icon: IconName;
   label: string;
   count: number;
   active: boolean;
+  collapsed?: boolean;
   onClick: () => void;
 }) => (
   <button
     type="button"
     className={count > 0 ? 'nav-item nav-item--strong' : 'nav-item'}
     aria-current={active ? 'page' : undefined}
+    aria-label={label}          // the label span is display:none in the collapsed rail
+    title={collapsed ? label : undefined}
     onClick={onClick}
   >
     <span className="nav-item__icon" aria-hidden="true"><Icon name={icon} /></span>
@@ -51,16 +55,19 @@ export const Sidebar = () => {
   // Labels discovered from the data — no label CRUD anywhere (spec §0)
   const labels = [...new Set(emails.flatMap(e => e.userLabels))].sort();
   const inboxCount = selectUnreadCount(emails, 'inbox', null);
+  const collapsed = !ui.sidebarOpen;   // Gmail keeps an icon rail, not an empty column
 
   return (
     <aside className="sidebar">
       <button
         type="button"
         className="sidebar__compose"
+        aria-label="Compose"
+        title={collapsed ? 'Compose' : undefined}
         onClick={() => ui.setComposeData({ ...EMPTY_COMPOSE })}
       >
         <span aria-hidden="true"><Icon name="edit" /></span>
-        Compose
+        <span className="sidebar__compose-text">Compose</span>
       </button>
 
       <nav className="sidebar__nav" aria-label="Views">
@@ -71,11 +78,12 @@ export const Sidebar = () => {
             label={item.label}
             count={item.view === 'inbox' ? inboxCount : 0}
             active={ui.view === item.view}
+            collapsed={collapsed}
             onClick={() => ui.changeView(item.view)}
           />
         ))}
 
-        {labels.length > 0 && (
+        {!collapsed && labels.length > 0 && (
           <>
             <div className="sidebar__divider"><span>Labels</span></div>
             {labels.map(name => (

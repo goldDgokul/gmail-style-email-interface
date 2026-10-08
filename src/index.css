@@ -56,7 +56,7 @@
   /* Layout */
   --topbar-h: 64px;
   --sidebar-w: 256px;
-  --sidebar-w-closed: 0px;
+  --sidebar-w-closed: 72px;
   --row-h: 40px;
   --compose-w: 600px;
   --rail-w: 56px;
@@ -255,10 +255,59 @@ input, textarea {
 }
 
 .shell[data-sidebar-closed] .sidebar {
-  width: 0;
+  /* the grid column (--sidebar-w-closed: 72px) sets the width — this is Gmail's mini rail */
+  padding: 8px 8px 16px;
+}
+
+/* Collapsed rail: icons only. Labels/counts are dropped, unread becomes a red dot. */
+.shell[data-sidebar-closed] .sidebar__compose {
+  width: 56px;
+  height: 56px;
   padding: 0;
-  opacity: 0;
-  pointer-events: none;
+  margin: 0 auto 12px;
+  align-self: center;
+  justify-content: center;
+  gap: 0;
+  border-radius: var(--r-full);
+}
+
+.shell[data-sidebar-closed] .sidebar__compose-text { display: none; }
+
+.shell[data-sidebar-closed] .sidebar__nav {
+  margin-left: 0;
+  scrollbar-width: none;
+}
+
+.shell[data-sidebar-closed] .sidebar__nav::-webkit-scrollbar { display: none; }
+
+.shell[data-sidebar-closed] .nav-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 4px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+  border-radius: var(--r-full);
+}
+
+.shell[data-sidebar-closed] .nav-item__label { display: none; }
+
+.shell[data-sidebar-closed] .nav-item__count {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: block;
+  min-width: 8px;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  background: var(--c-danger);
+  color: transparent;
+  border-radius: var(--r-full);
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
 }
 
 .sidebar__compose {
