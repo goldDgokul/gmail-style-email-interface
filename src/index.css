@@ -251,7 +251,7 @@ input, textarea {
   min-height: 0;
   padding: 8px 12px 16px 8px;
   overflow: hidden;
-  transition: width var(--dur) var(--ease), opacity var(--dur) var(--ease);
+  transition: width var(--dur) var(--ease);
 }
 
 .shell[data-sidebar-closed] .sidebar {
@@ -259,16 +259,19 @@ input, textarea {
   padding: 8px 8px 16px;
 }
 
-/* Collapsed rail: icons only. Labels/counts are dropped, unread becomes a red dot. */
-.shell[data-sidebar-closed] .sidebar__compose {
-  width: 56px;
-  height: 56px;
+/* Collapsed rail: icons only. Labels are dropped, unread becomes a red dot.
+   Circle geometry is shared by Compose and every nav item. */
+.shell[data-sidebar-closed] .sidebar__compose,
+.shell[data-sidebar-closed] .nav-item {
   padding: 0;
-  margin: 0 auto 12px;
-  align-self: center;
   justify-content: center;
   gap: 0;
   border-radius: var(--r-full);
+}
+
+.shell[data-sidebar-closed] .sidebar__compose {
+  width: 56px;
+  align-self: center;
 }
 
 .shell[data-sidebar-closed] .sidebar__compose-text { display: none; }
@@ -285,29 +288,18 @@ input, textarea {
   width: 48px;
   height: 48px;
   margin: 0 auto 4px;
-  padding: 0;
-  justify-content: center;
-  gap: 0;
-  border-radius: var(--r-full);
 }
 
 .shell[data-sidebar-closed] .nav-item__label { display: none; }
 
-.shell[data-sidebar-closed] .nav-item__count {
+.shell[data-sidebar-closed] .nav-item__dot {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  display: block;
-  min-width: 8px;
+  top: 10px;
+  right: 10px;
   width: 8px;
   height: 8px;
-  padding: 0;
   background: var(--c-danger);
-  color: transparent;
   border-radius: var(--r-full);
-  font-size: 0;
-  line-height: 0;
-  overflow: hidden;
 }
 
 .sidebar__compose {

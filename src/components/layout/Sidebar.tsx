@@ -36,14 +36,16 @@ const NavItem = ({
     type="button"
     className={count > 0 ? 'nav-item nav-item--strong' : 'nav-item'}
     aria-current={active ? 'page' : undefined}
-    aria-label={label}          // the label span is display:none in the collapsed rail
+    // only while collapsed: then display:none drops the visible text (count too)
+    aria-label={collapsed ? (count > 0 ? `${label}, ${count} unread` : label) : undefined}
     title={collapsed ? label : undefined}
     onClick={onClick}
   >
     <span className="nav-item__icon" aria-hidden="true"><Icon name={icon} /></span>
     <span className="nav-item__label">{label}</span>
-    {count > 0 && (
-      <span className="nav-item__count">{count.toLocaleString('en-US')}</span>
+    {count > 0 && (collapsed
+      ? <span className="nav-item__dot" aria-hidden="true" />
+      : <span className="nav-item__count">{count.toLocaleString('en-US')}</span>
     )}
   </button>
 );
@@ -56,13 +58,14 @@ export const Sidebar = () => {
   const labels = [...new Set(emails.flatMap(e => e.userLabels))].sort();
   const inboxCount = selectUnreadCount(emails, 'inbox', null);
   const collapsed = !ui.sidebarOpen;   // Gmail keeps an icon rail, not an empty column
+  const activeLabel = ui.activeLabel;
 
   return (
     <aside className="sidebar">
       <button
         type="button"
         className="sidebar__compose"
-        aria-label="Compose"
+        aria-label={collapsed ? 'Compose' : undefined}
         title={collapsed ? 'Compose' : undefined}
         onClick={() => ui.setComposeData({ ...EMPTY_COMPOSE })}
       >
@@ -92,11 +95,24 @@ export const Sidebar = () => {
                 icon="tag"
                 label={name}
                 count={selectUnreadCount(emails, 'label', name)}
-                active={ui.view === 'label' && ui.activeLabel === name}
+                active={ui.view === 'label' && activeLabel === name}
                 onClick={() => ui.changeLabel(name)}
               />
             ))}
           </>
+        )}
+
+        {/* labels are dropped in the rail, except the one we're standing on */}
+        {collapsed && ui.view === 'label' && activeLabel && (
+          <NavItem
+            key={activeLabel}
+            icon="tag"
+            label={activeLabel}
+            count={selectUnreadCount(emails, 'label', activeLabel)}
+            active
+            collapsed
+            onClick={() => ui.changeLabel(activeLabel)}
+          />
         )}
       </nav>
     </aside>

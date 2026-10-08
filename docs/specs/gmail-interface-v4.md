@@ -659,7 +659,8 @@ Unchanged from v3: full token system (colors, typography, layout, elevation, spa
 ### `AppShell.tsx`
 ```css
 .shell { display: grid; grid-template-rows: var(--topbar-h) 1fr;
-         grid-template-columns: var(--sidebar-w) 1fr var(--rail-w); height: 100dvh; overflow: hidden; }
+         grid-template-columns: var(--sidebar-w) 1fr var(--rail-w); height: 100dvh; overflow: hidden;
+         transition: grid-template-columns var(--dur) var(--ease); }
 .shell[data-sidebar-closed] { grid-template-columns: var(--sidebar-w-closed) 1fr var(--rail-w); }
 .sidebar { transition: width var(--dur) var(--ease); overflow: hidden; }
 ```
@@ -675,10 +676,10 @@ Search is debounced 200ms with cleanup, and a non-empty search **sets `search` i
 Flex column: compose button (`flex-shrink: 0`, top of column — *not* sticky) then a `flex: 1; overflow-y: auto` nav. Active item (`[aria-current='page']`): `background: var(--c-selected); color: var(--c-nav-active); font-weight: 700` — Gmail's active pill paints near-black navy text (`#041e49` measured on `#d3e3fd`), **not** the primary blue; items holding an unread count are bold regardless (`.nav-item--strong`).
 
 Items: Inbox, Starred, Important, Snoozed, Sent, Drafts, Spam, Trash, All Mail — then a plain `Labels` section header (no `+`/menu affordance — guardrail #13 makes a create-label control dead UI) with `changeLabel(name)` chips.
-Unread count: **rendered only for Inbox and user-label items** (guardrail #14), value from `selectUnreadCount(emails, view, activeLabel)`, rendered as plain trailing text in `.nav-item__count` (inherits the row's colour and weight — there is no pill/badge component; `ui/Badge.tsx` was removed as dead code). Inbox uses `'inbox'` + `null`; a label uses `'label'` + its name.
+Unread count: **rendered only for Inbox and user-label items** (guardrail #14), value from `selectUnreadCount(emails, view, activeLabel)`, rendered as plain trailing text in `.nav-item__count` (inherits the row's colour and weight — there is no pill/badge component; `ui/Badge.tsx` was removed as dead code); in the collapsed rail the markup renders `.nav-item__dot` instead of `.nav-item__count` — never both. Inbox uses `'inbox'` + `null`; a label uses `'label'` + its name.
 Compose button → `setComposeData({ ...EMPTY_COMPOSE })`.
 
-**Collapsed rail (☰ → `data-sidebar-closed`):** the sidebar becomes Gmail's 72px icon rail instead of disappearing. Compose shrinks to a 56px circle (pencil only — `.sidebar__compose-text` is hidden); each nav item becomes a 48px circle centred in the rail with `.nav-item__label` hidden; the Labels section is not rendered at all (Gmail parks labels behind a *More* chevron — that affordance is out of scope, so the labels simply collapse with it); an unread count renders as an 8px `--c-danger` dot at the item's top-right rather than a number. Since `display: none` strips text from the accessibility tree, every item carries `aria-label={label}` always and `title={label}` only while collapsed, so the rail stays announced and tooltipped.
+**Collapsed rail (☰ → `data-sidebar-closed`):** the sidebar becomes Gmail's 72px icon rail instead of disappearing. Column padding tightens to `8px 8px 16px`; Compose shrinks to a 56px circle (pencil only — `.sidebar__compose-text` is hidden); each nav item becomes a 48px circle with `.nav-item__label` hidden. Compose and nav items share **one** circle rule (`padding: 0; justify-content: center; gap: 0; border-radius: var(--r-full)`) — the same geometry `.icon-btn` already encodes — with only width/height/margin per element. The nav's scrollbar is suppressed (`scrollbar-width: none` + `::-webkit-scrollbar { display: none }`) so no sliver shows in 72px, and its `margin-left` resets to 0. The Labels section is not rendered — **except the active label, which stays in the rail as the active pill** (tag icon, its unread dot): the expanded labels are gone but the view's orientation must not be. Gmail parks labels behind a *More* chevron — that affordance is out of scope. An unread count renders as an 8px `--c-danger` dot (`.nav-item__dot`) at the icon's top-right, `top: 10px; right: 10px` — inside the 48px circle, over the icon's corner, not floating outside its arc. Accessibility: `aria-label` exists **only while collapsed** (`${label}` or `${label}, N unread`), because that is when `display: none` removes the visible text — count included — from the accessibility tree; expanded items keep their **visible text as their accessible name** (so Inbox still announces "Inbox 5"). `title={label}` likewise only while collapsed (native tooltip); the Compose button mirrors this (`aria-label="Compose"` only while collapsed).
 
 ### `EmailList.tsx`
 `<EmailToolbar>` + scrollable list of `<EmailRow>` + `<EmptyState>` when empty + `<Spinner>` when loading. Emits `visibleIds` (the rendered ids, in order) to `App.tsx` for keyboard navigation and the selection intersection.
@@ -853,7 +854,7 @@ Each step must compile before the next begins.
 
 **Views**
 - [ ] Every sidebar item filters correctly; label chips open the `'label'` pseudo-view
-- [ ] ☰ collapses the sidebar to a 72px icon rail (icons + active pill + unread dot, labels hidden, `aria-label`s intact) and re-expands to 256px
+- [ ] ☰ collapses the sidebar to a 72px icon rail (icons + active pill — including a label view's own pill — + unread dot, labels otherwise hidden, `aria-label`s on items **while collapsed**) and re-expands to 256px
 - [ ] Inbox excludes future-snoozed; Snoozed includes only them
 - [ ] All Mail excludes Trash, Spam **and** Drafts
 - [ ] Search ignores the current View, returns matches from non-Trash/non-Spam only, and **does not change any badge**
